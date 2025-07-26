@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Movie Game</title>
+  <title>Guilty Pleasure</title>
   <style>
     body {
       font-family: sans-serif;
@@ -43,6 +43,57 @@
       display: block;
       margin: 0.25rem 0;
     }
+
+    /* Dark mode and table styling */
+    body {
+      background: #121212;
+      color: #e0e0e0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    th,
+    td {
+      border: 1px solid #333;
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    th {
+      background: #1f1f1f;
+    }
+
+    button {
+      background: #333;
+      color: #e0e0e0;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Auto-fit first column to content */
+    table {
+      table-layout: auto;
+    }
+
+    th:first-child,
+    td:first-child {
+      white-space: nowrap;
+    }
+
+    /* Center-align second (value) column */
+    th:last-child,
+    td:last-child {
+      text-align: center;
+    }
   </style>
 </head>
 
@@ -50,7 +101,7 @@
 
   <!-- Lobby Screen -->
   <div id="lobby">
-    <h1>Movie Game Lobby</h1>
+    <h1>Guilty Pleasure Movie</h1>
     <label for="numPlayers">Number of players:</label>
     <input type="number" id="numPlayers" min="2" value="2" />
     <div id="playerNames"></div>
@@ -69,12 +120,20 @@
 
   <!-- Quiz Screen -->
   <div id="quiz" class="hidden">
-    <!-- TODO: Implement Quiz UI -->
+    <h1>Quiz</h1>
+    <p id="yearPrompt"></p>
+    <p id="ratingPrompt"></p>
+    <table>
+      <tbody></tbody>
+    </table>
+    <button id="nextQuizBtn">Next</button>
   </div>
 
   <!-- Results Screen -->
   <div id="results" class="hidden">
-    <!-- TODO: Implement Results UI -->
+    <h1>Results</h1>
+    <div id="resultsList"></div>
+    <button id="restartBtn">Restart Game</button>
   </div>
 
   <script>
@@ -96,6 +155,10 @@
     const searchBtn = document.getElementById('searchBtn');
     const confirmBtn = document.getElementById('confirmBtn');
     const searchResultsEl = document.getElementById('searchResults');
+    const quizEl = document.getElementById('quiz');
+    const resultsEl = document.getElementById('results');
+    const yearPromptEl = document.getElementById('yearPrompt');
+    const ratingPromptEl = document.getElementById('ratingPrompt');
 
     // Load the movies.json file (place it next to index.html)
     fetch('movies.json')
@@ -109,6 +172,8 @@
     // --- Phase 1: Lobby Screen Logic ---
     document.getElementById('numPlayers').addEventListener('input', generateNameInputs);
     function generateNameInputs() {
+      // Preserve any existing player name inputs
+      const oldValues = Array.from(namesContainer.querySelectorAll('input[id^="player-"]')).map(i => i.value);
       const num = parseInt(document.getElementById('numPlayers').value) || 0;
       namesContainer.innerHTML = '';
       for (let i = 0; i < num; i++) {
@@ -118,6 +183,8 @@
         input.type = 'text';
         input.id = `player-${i}`;
         input.placeholder = `Player ${i + 1}`;
+        // Restore previously entered name if still available
+        input.value = oldValues[i] || '';
         namesContainer.appendChild(label);
         namesContainer.appendChild(input);
       }
@@ -183,7 +250,7 @@
       // render matches
       searchResultsEl.innerHTML = currentMatches.map((m, idx) =>
         `<label><input type="radio" name="match" value="${idx}" /> ` +
-        `${m.primaryTitle} (${m.startYear || 'N/A'}) — Rating: ${m.averageRating} — ${m.runtimeMinutes}m</label>`
+        `${m.primaryTitle} (${m.startYear || 'N/A'}) — Rating: ${m.averageRating.toFixed(1)} — ${m.runtimeMinutes}m</label>`
       ).join('');
       confirmBtn.disabled = true; // remain disabled until a choice
     });
@@ -207,15 +274,80 @@
       movieTitleInput.value = '';
       if (currentMovieIndex >= players.length) {
         movieEntryEl.classList.add('hidden');
-        // initQuiz();
+        initQuiz();
       } else {
         showNextMoviePrompt();
       }
     });
 
-    // Placeholder functions
+    // Start the Quiz
     function initQuiz() {
-      // TODO: Implement Quiz UI
+      currentMovieIndex = 0;
+      // Initialize correctness flags
+      movies.forEach(m => {
+        m.correctYear = false;
+        m.correctRating = false;
+      });
+      quizEl.classList.remove('hidden');
+      showNextQuiz();
+    }
+
+    function showNextQuiz() {
+      if (currentMovieIndex >= movies.length) {
+        quizEl.classList.add('hidden');
+        showResults();
+        return;
+      }
+      const mov = movies[currentMovieIndex];
+      yearPromptEl.textContent = `What Year was "${mov.primaryTitle}" released?`;
+      ratingPromptEl.textContent = `What Rating out of 10 does "${mov.primaryTitle}" have?`;
+      const tbody = quizEl.querySelector('tbody');
+      tbody.innerHTML = `
+        <tr><th>Player</th><td>${mov.name}</td></tr>
+        <tr><th>Movie Title</th><td>${mov.primaryTitle}</td></tr>
+        <tr><th>Year</th><td>${mov.startYear || 'N/A'}</td></tr>
+        <tr><th>Rating</th><td>${mov.averageRating.toFixed(1)}</td></tr>
+        <tr><th>Correct Year</th><td><input type="checkbox" id="yearChk" /></td></tr>
+        <tr><th>Correct Rating</th><td><input type="checkbox" id="ratingChk" /></td></tr>
+      `;
+    }
+
+    document.getElementById('nextQuizBtn').addEventListener('click', () => {
+      const mov = movies[currentMovieIndex];
+      mov.correctYear = document.getElementById('yearChk').checked;
+      mov.correctRating = document.getElementById('ratingChk').checked;
+      currentMovieIndex++;
+      showNextQuiz();
+    });
+
+    function showResults() {
+      const resultsList = document.getElementById('resultsList');
+      // Calculate points and include movie titles and rating
+      const scores = players.map(p => {
+        const entry = movies.find(m => m.name === p.name);
+        const points = (entry.correctYear ? 1 : 0) + (entry.correctRating ? 1 : 0);
+        return { name: p.name, title: entry.primaryTitle, rating: entry.averageRating, points };
+      });
+      // Sort ascending by IMDb rating
+      scores.sort((a, b) => a.rating - b.rating);
+      // Render as table
+      resultsList.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>Player</th><th>Movie Title</th><th>Rating</th><th>Score</th></tr>
+          </thead>
+          <tbody>
+            ${scores.map(s =>
+        `<tr><td>${s.name}</td><td>${s.title}</td><td>${s.rating.toFixed(1)}</td><td>${s.points}</td></tr>`
+      ).join('')}
+          </tbody>
+        </table>
+      `;
+      resultsEl.classList.remove('hidden');
+      document.getElementById('restartBtn').addEventListener('click', () => {
+        resultsEl.classList.add('hidden');
+        lobbyEl.classList.remove('hidden');
+      });
     }
   </script>
 
