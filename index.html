@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    input,
+    button,
+    select {
+      font-size: 1rem;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #lobby,
+    #movie-entry,
+    #quiz,
+    #results {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    #searchResults label {
+      display: block;
+      margin: 0.25rem 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Lobby Screen -->
+  <div id="lobby">
+    <h1>Movie Game Lobby</h1>
+    <label for="numPlayers">Number of players:</label>
+    <input type="number" id="numPlayers" min="2" value="2" />
+    <div id="playerNames"></div>
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <!-- Movie Entry Screen -->
+  <div id="movie-entry" class="hidden">
+    <h1>Enter Guilty-Pleasure Movies</h1>
+    <p id="movie-prompt"></p>
+    <input type="text" id="movieTitle" placeholder="Movie Title" />
+    <button id="searchBtn">Search</button>
+    <button id="confirmBtn" disabled>Confirm</button>
+    <div id="searchResults"></div>
+  </div>
+
+  <!-- Quiz Screen -->
+  <div id="quiz" class="hidden">
+    <!-- TODO: Implement Quiz UI -->
+  </div>
+
+  <!-- Results Screen -->
+  <div id="results" class="hidden">
+    <!-- TODO: Implement Results UI -->
+  </div>
+
+  <script>
+    let moviesData = [];
+    let players = [];
+    let movies = [];
+    let currentCaptainIndex = 0;
+    let currentMovieIndex = 0;
+    let isSelecting = false;
+    let currentMatches = [];
+
+    // Elements
+    const lobbyEl = document.getElementById('lobby');
+    const namesContainer = document.getElementById('playerNames');
+    const startBtn = document.getElementById('startBtn');
+    const movieEntryEl = document.getElementById('movie-entry');
+    const moviePromptEl = document.getElementById('movie-prompt');
+    const movieTitleInput = document.getElementById('movieTitle');
+    const searchBtn = document.getElementById('searchBtn');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const searchResultsEl = document.getElementById('searchResults');
+
+    // Load the movies.json file (place it next to index.html)
+    fetch('movies.json')
+      .then(res => res.json())
+      .then(data => {
+        moviesData = data;
+        console.log(`Loaded ${moviesData.length} movies.`);
+      })
+      .catch(err => console.error('Failed to load movies.json', err));
+
+    // --- Phase 1: Lobby Screen Logic ---
+    document.getElementById('numPlayers').addEventListener('input', generateNameInputs);
+    function generateNameInputs() {
+      const num = parseInt(document.getElementById('numPlayers').value) || 0;
+      namesContainer.innerHTML = '';
+      for (let i = 0; i < num; i++) {
+        const label = document.createElement('label');
+        label.textContent = `Player ${i + 1} Name:`;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `player-${i}`;
+        input.placeholder = `Player ${i + 1}`;
+        namesContainer.appendChild(label);
+        namesContainer.appendChild(input);
+      }
+    }
+    generateNameInputs();
+
+    startBtn.addEventListener('click', () => {
+      const num = parseInt(document.getElementById('numPlayers').value);
+      players = [];
+      for (let i = 0; i < num; i++) {
+        const name = document.getElementById(`player-${i}`).value.trim() || `Player ${i + 1}`;
+        players.push({ name });
+      }
+      lobbyEl.classList.add('hidden');
+      movieEntryEl.classList.remove('hidden');
+      initMovieEntry();
+    });
+
+    // --- Phase 2: Movie Entry with Lookup ---
+    function initMovieEntry() {
+      movies = [];
+      currentMovieIndex = 0;
+      isSelecting = false;
+      currentMatches = [];
+      // Reset buttons
+      confirmBtn.disabled = true;
+      searchBtn.disabled = false;
+      searchResultsEl.innerHTML = '';
+      showNextMoviePrompt();
+    }
+
+    function showNextMoviePrompt() {
+      const player = players[currentMovieIndex];
+      moviePromptEl.textContent = `${player.name}, what’s your guilty-pleasure movie?`;
+      movieTitleInput.value = '';
+      movieTitleInput.disabled = false;
+      movieTitleInput.focus();
+      searchResultsEl.innerHTML = '';
+      isSelecting = false;
+      // Reset buttons for new player
+      confirmBtn.disabled = true;
+      searchBtn.disabled = false;
+    }
+
+    // SEARCH: lookup movies.json and render radio list
+    searchBtn.addEventListener('click', () => {
+      const title = movieTitleInput.value.trim();
+      if (!title) return;
+      // normalize and search
+      const normalize = str => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const searchNorm = normalize(title);
+      currentMatches = moviesData
+        .filter(m => normalize(m.primaryTitle).includes(searchNorm))
+        .sort((a, b) => b.numVotes - a.numVotes)
+        .slice(0, 10);
+
+      if (currentMatches.length === 0) {
+        searchResultsEl.innerHTML = '<p>No matches found. Please refine your title.</p>';
+        confirmBtn.disabled = true;
+        return;
+      }
+
+      // render matches
+      searchResultsEl.innerHTML = currentMatches.map((m, idx) =>
+        `<label><input type="radio" name="match" value="${idx}" /> ` +
+        `${m.primaryTitle} (${m.startYear || 'N/A'}) — Rating: ${m.averageRating} — ${m.runtimeMinutes}m</label>`
+      ).join('');
+      confirmBtn.disabled = true; // remain disabled until a choice
+    });
+
+    // ENABLE Confirm only after a radio is selected
+    searchResultsEl.addEventListener('change', e => {
+      if (e.target.name === 'match') {
+        confirmBtn.disabled = false;
+      }
+    });
+
+    // CONFIRM: save selection and advance
+    confirmBtn.addEventListener('click', () => {
+      const sel = document.querySelector('input[name="match"]:checked');
+      if (!sel) return;
+      const match = currentMatches[parseInt(sel.value, 10)];
+      movies.push({ name: players[currentMovieIndex].name, ...match });
+      currentMovieIndex++;
+      confirmBtn.disabled = true;
+      searchResultsEl.innerHTML = '';
+      movieTitleInput.value = '';
+      if (currentMovieIndex >= players.length) {
+        movieEntryEl.classList.add('hidden');
+        // initQuiz();
+      } else {
+        showNextMoviePrompt();
+      }
+    });
+
+    // Placeholder functions
+    function initQuiz() {
+      // TODO: Implement Quiz UI
+    }
+  </script>
+
+</body>
+
+</html>
