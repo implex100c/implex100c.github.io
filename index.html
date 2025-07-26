@@ -94,6 +94,17 @@
     td:last-child {
       text-align: center;
     }
+
+    /* Search result items styling */
+    .search-item {
+      display: flex;
+      align-items: center;
+      padding: 0.25rem 0;
+    }
+
+    .search-item input {
+      margin-right: 0.5rem;
+    }
   </style>
 </head>
 
@@ -247,12 +258,31 @@
         return;
       }
 
-      // render matches
-      searchResultsEl.innerHTML = currentMatches.map((m, idx) =>
-        `<label><input type="radio" name="match" value="${idx}" /> ` +
-        `${m.primaryTitle} (${m.startYear || 'N/A'}) — Rating: ${m.averageRating.toFixed(1)} — ${m.runtimeMinutes}m</label>`
-      ).join('');
-      confirmBtn.disabled = true; // remain disabled until a choice
+      // render matches in a table: Movie Title | Radio (Choice)
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Movie Title</th>
+              <th>Choice</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      currentMatches.forEach((m, idx) => {
+        html += `
+            <tr>
+              <td>${m.primaryTitle} (${m.startYear || 'N/A'})</td>
+              <td><input type="radio" name="match" value="${idx}" /></td>
+            </tr>
+        `;
+      });
+      html += `
+          </tbody>
+        </table>
+      `;
+      searchResultsEl.innerHTML = html;
+      confirmBtn.disabled = true;
     });
 
     // ENABLE Confirm only after a radio is selected
