@@ -79,16 +79,6 @@
       cursor: not-allowed;
     }
 
-    /* Auto-fit first column to content */
-    table {
-      table-layout: auto;
-    }
-
-    th:first-child,
-    td:first-child {
-      white-space: nowrap;
-    }
-
     /* Center-align second (value) column */
     th:last-child,
     td:last-child {
@@ -151,9 +141,7 @@
     let moviesData = [];
     let players = [];
     let movies = [];
-    let currentCaptainIndex = 0;
     let currentMovieIndex = 0;
-    let isSelecting = false;
     let currentMatches = [];
 
     // Elements
@@ -171,14 +159,34 @@
     const yearPromptEl = document.getElementById('yearPrompt');
     const ratingPromptEl = document.getElementById('ratingPrompt');
 
+    // Helper: normalize strings for searching
+    function normalize(str) {
+      return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    // Disable search until data is loaded
+    searchBtn.disabled = true;
+
+    // Single restart handler
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      resultsEl.classList.add('hidden');
+      lobbyEl.classList.remove('hidden');
+    });
+
     // Load the movies.json file (place it next to index.html)
     fetch('movies.json')
       .then(res => res.json())
       .then(data => {
         moviesData = data;
         console.log(`Loaded ${moviesData.length} movies.`);
+        // Enable search now that data is ready
+        searchBtn.disabled = false;
       })
-      .catch(err => console.error('Failed to load movies.json', err));
+      .catch(err => {
+        console.error('Failed to load movies.json', err);
+        // Show error and keep search disabled
+        searchResultsEl.innerHTML = '<p style="color:red;">Failed to load movie data.</p>';
+      });
 
     // --- Phase 1: Lobby Screen Logic ---
     document.getElementById('numPlayers').addEventListener('input', generateNameInputs);
@@ -193,6 +201,7 @@
         const input = document.createElement('input');
         input.type = 'text';
         input.id = `player-${i}`;
+        label.htmlFor = input.id;
         input.placeholder = `Player ${i + 1}`;
         // Restore previously entered name if still available
         input.value = oldValues[i] || '';
@@ -200,6 +209,15 @@
         namesContainer.appendChild(input);
       }
     }
+    // Disable start unless at least 2 players
+    const numPlayersInput = document.getElementById('numPlayers');
+    function updateStartState() {
+      const n = parseInt(numPlayersInput.value) || 0;
+      startBtn.disabled = n < 2;
+    }
+    numPlayersInput.addEventListener('input', updateStartState);
+    updateStartState();
+
     generateNameInputs();
 
     startBtn.addEventListener('click', () => {
@@ -218,7 +236,6 @@
     function initMovieEntry() {
       movies = [];
       currentMovieIndex = 0;
-      isSelecting = false;
       currentMatches = [];
       // Reset buttons
       confirmBtn.disabled = true;
@@ -234,7 +251,6 @@
       movieTitleInput.disabled = false;
       movieTitleInput.focus();
       searchResultsEl.innerHTML = '';
-      isSelecting = false;
       // Reset buttons for new player
       confirmBtn.disabled = true;
       searchBtn.disabled = false;
@@ -245,7 +261,6 @@
       const title = movieTitleInput.value.trim();
       if (!title) return;
       // normalize and search
-      const normalize = str => str.toLowerCase().replace(/[^a-z0-9]/g, '');
       const searchNorm = normalize(title);
       currentMatches = moviesData
         .filter(m => normalize(m.primaryTitle).includes(searchNorm))
@@ -283,6 +298,14 @@
       `;
       searchResultsEl.innerHTML = html;
       confirmBtn.disabled = true;
+    });
+
+    // Allow Enter key to trigger Search
+    movieTitleInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        e.preventDefault();
+        if (!searchBtn.disabled) searchBtn.click();
+      }
     });
 
     // ENABLE Confirm only after a radio is selected
@@ -374,10 +397,6 @@
         </table>
       `;
       resultsEl.classList.remove('hidden');
-      document.getElementById('restartBtn').addEventListener('click', () => {
-        resultsEl.classList.add('hidden');
-        lobbyEl.classList.remove('hidden');
-      });
     }
   </script>
 
