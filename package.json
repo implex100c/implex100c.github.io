@@ -1,0 +1,10 @@
+{
+  "name": "guilty-pleasure-game",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build:data": "node scripts/build-imdb-slim.js",
+    "build:data:json": "node scripts/build-imdb-slim.js --from-json movies.json",
+    "download:data": "mkdir -p data/raw && curl -L -o data/raw/title.basics.tsv.gz https://datasets.imdbws.com/title.basics.tsv.gz && curl -L -o data/raw/title.ratings.tsv.gz https://datasets.imdbws.com/title.ratings.tsv.gz"
+  }
+}

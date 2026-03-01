@@ -313,7 +313,7 @@ async function bootstrap() {
 
   state.dataStatus = 'loading';
   try {
-    state.moviesData = await loadMovies('movies.json');
+    state.moviesData = await loadMovies('movies.slim.json');
     state.dataStatus = 'ready';
     if (state.stage === 'movieEntry') {
       ui.setSearchEnabled(true);

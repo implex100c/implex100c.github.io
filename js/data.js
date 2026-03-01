@@ -58,7 +58,7 @@ export async function loadMovies(url) {
 
   const payload = await response.json();
   if (!Array.isArray(payload)) {
-    throw new Error('movies.json is not an array');
+    throw new Error(`${url} is not an array`);
   }
 
   const movies = [];

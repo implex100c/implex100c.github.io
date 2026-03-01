@@ -2,9 +2,9 @@
 
 ## 1) Startup / Load
 - Open `index.html` via local server.
-- Confirm `Search` is disabled before `movies.json` finishes loading.
+- Confirm `Search` is disabled before `movies.slim.json` finishes loading.
 - Confirm `Search` becomes enabled once data is loaded.
-- Simulate missing `movies.json` and confirm error text appears and `Search` stays disabled.
+- Simulate missing `movies.slim.json` and confirm error text appears and `Search` stays disabled.
 
 ## 2) Lobby
 - Set player count to `1`: confirm `Start Game` is disabled.
