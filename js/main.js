@@ -229,6 +229,10 @@ function renderResults() {
       return ar - br;
     }
 
+    if (b.points !== a.points) {
+      return b.points - a.points;
+    }
+
     return a.name.localeCompare(b.name);
   });
 
