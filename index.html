@@ -8,6 +8,14 @@
   <style>
     :root {
       color-scheme: dark;
+      --space-1: 0.5rem;
+      --space-2: 0.75rem;
+      --space-3: 1rem;
+      --space-4: 1.25rem;
+      --radius: 8px;
+      --surface: #161616;
+      --border: #2f2f2f;
+      --muted: #bdbdbd;
     }
 
     body {
@@ -84,6 +92,87 @@
       color: #ff6b6b;
     }
 
+    #quiz table {
+      table-layout: fixed;
+    }
+
+    #quiz th {
+      width: 220px;
+      white-space: nowrap;
+    }
+
+    #quiz th,
+    #quiz td {
+      height: 52px;
+      vertical-align: middle;
+      box-sizing: border-box;
+    }
+
+    #quiz td {
+      text-align: left;
+      word-break: break-word;
+    }
+
+    #quiz td:last-child {
+      text-align: left;
+    }
+
+    #quiz input[type="checkbox"] {
+      width: auto;
+      padding: 0;
+      margin: 0;
+    }
+
+    #quiz-questions {
+      margin: 0.5rem 0 1rem 1.25rem;
+      padding: 0;
+    }
+
+    #quiz-questions li {
+      margin: 0.4rem 0;
+    }
+
+    .quiz-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: var(--space-4);
+      margin: var(--space-3) 0;
+    }
+
+    .quiz-movie {
+      margin: 0 0 var(--space-3);
+      color: var(--muted);
+    }
+
+    .quiz-fields {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+
+    .quiz-fields li {
+      margin-bottom: var(--space-3);
+    }
+
+    .quiz-fields label {
+      margin-bottom: var(--space-1);
+      font-weight: 600;
+    }
+
+    .quiz-hint {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .field-error {
+      margin-top: 0.35rem;
+      margin-bottom: 0;
+      font-size: 0.85rem;
+      color: #ff6b6b;
+      min-height: 1em;
+    }
+
     .site-meta {
       position: fixed;
       left: 0;
@@ -98,6 +187,16 @@
       text-align: center;
       z-index: 1000;
     }
+
+    .mark-correct {
+      color: #4ade80;
+      font-weight: 700;
+    }
+
+    .mark-incorrect {
+      color: #f87171;
+      font-weight: 700;
+    }
   </style>
 </head>
 
@@ -111,7 +210,7 @@
   </div>
 
   <div id="movie-entry" class="hidden">
-    <h1>Enter Guilty-Pleasure Movies</h1>
+    <h1 id="movieEntryTitle">Enter Guilty-Pleasure Movies</h1>
     <p id="movie-prompt"></p>
     <input type="text" id="movieTitle" placeholder="Movie Title" />
     <button id="searchBtn" disabled>Search</button>
@@ -120,12 +219,22 @@
   </div>
 
   <div id="quiz" class="hidden">
-    <h1>Quiz</h1>
-    <p id="yearPrompt"></p>
-    <p id="ratingPrompt"></p>
-    <table>
-      <tbody id="quizTableBody"></tbody>
-    </table>
+    <h1 id="quizTitle">Quiz</h1>
+    <div class="quiz-card">
+      <p id="quizMoviePrompt" class="quiz-movie"></p>
+      <ol class="quiz-fields">
+        <li>
+          <label for="yearGuessInput" id="yearPrompt">What year was this movie released?</label>
+          <input type="number" id="yearGuessInput" min="1900" placeholder="e.g. 2001" inputmode="numeric" />
+          <p id="yearError" class="field-error"></p>
+        </li>
+        <li>
+          <label for="ratingGuessInput" id="ratingPrompt">What rating out of 10 does this movie have?</label>
+          <input type="number" id="ratingGuessInput" min="0" max="10" step="0.1" placeholder="e.g. 7.7" inputmode="decimal" />
+          <p id="ratingError" class="field-error"></p>
+        </li>
+      </ol>
+    </div>
     <button id="nextQuizBtn">Next</button>
   </div>
 
@@ -135,7 +244,7 @@
     <button id="restartBtn">Restart Game</button>
   </div>
 
-  <footer class="site-meta">Version 1.1.0 | Last updated March 1, 2026</footer>
+  <footer class="site-meta">Version 1.2.0 | Last updated March 1, 2026</footer>
 
   <script type="module" src="./js/main.js"></script>
 </body>

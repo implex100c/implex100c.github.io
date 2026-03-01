@@ -14,6 +14,8 @@ import { createUI } from './ui.js';
 
 const state = createInitialState();
 const ui = createUI(document);
+const MIN_VALID_YEAR = 1900;
+const MAX_VALID_YEAR = new Date().getFullYear() + 1;
 
 function createPlayerId(index) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -190,9 +192,13 @@ function handleQuizNext() {
     return;
   }
 
-  const checks = ui.getQuizChecks();
-  entry.correctYear = checks.correctYear;
-  entry.correctRating = checks.correctRating;
+  const validation = validateQuizInputs({ showRequired: true });
+  if (!validation.valid) {
+    return;
+  }
+
+  entry.correctYear = isCorrectYear(validation.yearGuess, entry.startYear);
+  entry.correctRating = isCorrectRating(validation.ratingGuess, entry.averageRating);
 
   const next = advanceQuiz(state);
   if (next.done) {
@@ -209,6 +215,75 @@ function handleQuizNext() {
   renderCurrentQuiz();
 }
 
+function validateQuizInputs({ showRequired }) {
+  const { yearRaw, ratingRaw } = ui.getQuizAnswerInputs();
+  let yearError = '';
+  let ratingError = '';
+
+  let yearGuess = null;
+  if (!yearRaw) {
+    if (showRequired) {
+      yearError = 'Enter a year.';
+    }
+  } else if (!/^\d{4}$/.test(yearRaw)) {
+    yearError = 'Year must be a 4-digit number.';
+  } else {
+    yearGuess = Number.parseInt(yearRaw, 10);
+    if (!Number.isFinite(yearGuess) || yearGuess < MIN_VALID_YEAR || yearGuess > MAX_VALID_YEAR) {
+      yearError = `Year must be between ${MIN_VALID_YEAR} and ${MAX_VALID_YEAR}.`;
+    }
+  }
+
+  let ratingGuess = null;
+  if (!ratingRaw) {
+    if (showRequired) {
+      ratingError = 'Enter a rating.';
+    }
+  } else {
+    const isIntegerRating = /^(?:10|[0-9])$/.test(ratingRaw);
+    const isOneDecimalRating = /^(?:10\.0|[0-9]\.[0-9])$/.test(ratingRaw);
+
+    if (!isIntegerRating && !isOneDecimalRating) {
+      ratingError = 'Rating must be one decimal place (e.g. 7.7).';
+    } else {
+      ratingGuess = Number.parseFloat(ratingRaw);
+      if (!Number.isFinite(ratingGuess) || ratingGuess < 0 || ratingGuess > 10) {
+        ratingError = 'Rating must be from 0.0 to 10.0.';
+      } else {
+        // Normalize valid integer ratings like "7" to "7.0" on submit.
+        ui.el.ratingGuessInput.value = ratingGuess.toFixed(1);
+      }
+    }
+  }
+
+  const valid = !yearError && !ratingError && yearGuess !== null && ratingGuess !== null;
+  ui.setQuizFieldErrors(yearError, ratingError);
+
+  return {
+    valid,
+    yearGuess,
+    ratingGuess
+  };
+}
+
+function isCorrectYear(guess, actual) {
+  if (!Number.isFinite(actual)) {
+    return false;
+  }
+
+  return Math.trunc(guess) === Math.trunc(actual);
+}
+
+function isCorrectRating(guess, actual) {
+  if (!Number.isFinite(actual)) {
+    return false;
+  }
+
+  const roundedGuess = Math.round(guess * 10) / 10;
+  const roundedActual = Math.round(actual * 10) / 10;
+  return roundedGuess === roundedActual;
+}
+
 function renderResults() {
   const scores = state.players.map(player => {
     const entry = state.entriesByPlayerId.get(player.id);
@@ -218,6 +293,9 @@ function renderResults() {
       name: player.name,
       title: entry ? entry.primaryTitle : 'N/A',
       rating: entry ? entry.averageRating : null,
+      startYear: entry ? entry.startYear : null,
+      correctYear: entry ? Boolean(entry.correctYear) : false,
+      correctRating: entry ? Boolean(entry.correctRating) : false,
       points
     };
   });
@@ -236,13 +314,17 @@ function renderResults() {
     return a.name.localeCompare(b.name);
   });
 
-  const winnerText = buildWinnerText(scores);
-  ui.renderResults(scores, winnerText);
+  const winnerSummary = buildWinnerSummary(scores);
+  ui.renderResults(scores, winnerSummary);
 }
 
-function buildWinnerText(scores) {
+function buildWinnerSummary(scores) {
   if (scores.length === 0) {
-    return 'The winner is unavailable.';
+    return {
+      winners: [],
+      textBeforeNames: 'The winner is unavailable.',
+      textAfterNames: ''
+    };
   }
 
   const top = scores[0];
@@ -258,10 +340,18 @@ function buildWinnerText(scores) {
     .sort((a, b) => a.localeCompare(b));
 
   if (winners.length === 1) {
-    return `The winner is ${winners[0]} with the lowest rating and highest score!`;
+    return {
+      winners,
+      textBeforeNames: 'The winner is ',
+      textAfterNames: ' with the lowest rating and highest score!'
+    };
   }
 
-  return `The winners are ${winners.join(', ')} with the lowest rating and highest score!`;
+  return {
+    winners,
+    textBeforeNames: 'The winners are ',
+    textAfterNames: ' with the lowest rating and highest score!'
+  };
 }
 
 function handleRestart() {

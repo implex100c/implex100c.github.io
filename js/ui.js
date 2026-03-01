@@ -14,6 +14,15 @@ export function formatRating(rating) {
   return Number(rating).toFixed(1);
 }
 
+function formatDecade(year) {
+  if (!Number.isFinite(year)) {
+    return 'Unknown';
+  }
+
+  const decadeStart = Math.floor(year / 10) * 10;
+  return `${decadeStart}s`;
+}
+
 export function createUI(doc) {
   const el = {
     lobby: doc.getElementById('lobby'),
@@ -23,14 +32,20 @@ export function createUI(doc) {
     numPlayersInput: doc.getElementById('numPlayers'),
     namesContainer: doc.getElementById('playerNames'),
     startBtn: doc.getElementById('startBtn'),
+    movieEntryTitle: doc.getElementById('movieEntryTitle'),
     moviePrompt: doc.getElementById('movie-prompt'),
     movieTitleInput: doc.getElementById('movieTitle'),
     searchBtn: doc.getElementById('searchBtn'),
     confirmBtn: doc.getElementById('confirmBtn'),
     searchResults: doc.getElementById('searchResults'),
+    quizTitle: doc.getElementById('quizTitle'),
+    quizMoviePrompt: doc.getElementById('quizMoviePrompt'),
     yearPrompt: doc.getElementById('yearPrompt'),
     ratingPrompt: doc.getElementById('ratingPrompt'),
-    quizTableBody: doc.getElementById('quizTableBody'),
+    yearGuessInput: doc.getElementById('yearGuessInput'),
+    ratingGuessInput: doc.getElementById('ratingGuessInput'),
+    yearError: doc.getElementById('yearError'),
+    ratingError: doc.getElementById('ratingError'),
     nextQuizBtn: doc.getElementById('nextQuizBtn'),
     resultsList: doc.getElementById('resultsList'),
     restartBtn: doc.getElementById('restartBtn')
@@ -87,7 +102,8 @@ export function createUI(doc) {
   }
 
   function setMoviePrompt(playerName) {
-    el.moviePrompt.textContent = `${playerName}, what's your guilty-pleasure movie?`;
+    el.movieEntryTitle.textContent = playerName;
+    el.moviePrompt.textContent = "What's your guilty pleasure movie?";
   }
 
   function clearMovieEntryForm() {
@@ -138,7 +154,7 @@ export function createUI(doc) {
 
     matches.forEach((movie, idx) => {
       const row = doc.createElement('tr');
-      appendCell(row, 'td', `${movie.primaryTitle} (${formatYear(movie.startYear)})`);
+      appendCell(row, 'td', `${movie.primaryTitle} (${formatDecade(movie.startYear)})`);
 
       const choiceCell = doc.createElement('td');
       const radio = doc.createElement('input');
@@ -171,68 +187,52 @@ export function createUI(doc) {
   }
 
   function renderQuiz(entry, playerName) {
-    el.yearPrompt.textContent = `What Year was "${entry.primaryTitle}" released?`;
-    el.ratingPrompt.textContent = `What Rating out of 10 does "${entry.primaryTitle}" have?`;
-    clearChildren(el.quizTableBody);
-
-    const rows = [
-      ['Player', playerName],
-      ['Movie Title', entry.primaryTitle],
-      ['Year', formatYear(entry.startYear)],
-      ['Rating', formatRating(entry.averageRating)]
-    ];
-
-    rows.forEach(([label, value]) => {
-      const tr = doc.createElement('tr');
-      appendCell(tr, 'th', label);
-      appendCell(tr, 'td', value);
-      el.quizTableBody.appendChild(tr);
-    });
-
-    const yearRow = doc.createElement('tr');
-    appendCell(yearRow, 'th', 'Correct Year');
-    const yearCell = doc.createElement('td');
-    const yearCheck = doc.createElement('input');
-    yearCheck.type = 'checkbox';
-    yearCheck.id = 'yearChk';
-    yearCheck.checked = Boolean(entry.correctYear);
-    yearCell.appendChild(yearCheck);
-    yearRow.appendChild(yearCell);
-    el.quizTableBody.appendChild(yearRow);
-
-    const ratingRow = doc.createElement('tr');
-    appendCell(ratingRow, 'th', 'Correct Rating');
-    const ratingCell = doc.createElement('td');
-    const ratingCheck = doc.createElement('input');
-    ratingCheck.type = 'checkbox';
-    ratingCheck.id = 'ratingChk';
-    ratingCheck.checked = Boolean(entry.correctRating);
-    ratingCell.appendChild(ratingCheck);
-    ratingRow.appendChild(ratingCell);
-    el.quizTableBody.appendChild(ratingRow);
+    el.quizTitle.textContent = playerName;
+    el.quizMoviePrompt.textContent = `Movie: ${entry.primaryTitle}`;
+    el.yearPrompt.textContent = `What year was "${entry.primaryTitle}" released?`;
+    el.ratingPrompt.textContent = `What rating out of 10 does "${entry.primaryTitle}" have?`;
+    el.yearGuessInput.value = '';
+    el.ratingGuessInput.value = '';
+    setQuizFieldErrors('', '');
+    setNextQuizEnabled(true);
+    el.yearGuessInput.focus();
   }
 
-  function getQuizChecks() {
-    const year = doc.getElementById('yearChk');
-    const rating = doc.getElementById('ratingChk');
-
+  function getQuizAnswerInputs() {
     return {
-      correctYear: Boolean(year && year.checked),
-      correctRating: Boolean(rating && rating.checked)
+      yearRaw: el.yearGuessInput.value.trim(),
+      ratingRaw: el.ratingGuessInput.value.trim()
     };
   }
 
-  function renderResults(scores, winnerText) {
+  function setQuizFieldErrors(yearMessage, ratingMessage) {
+    el.yearError.textContent = yearMessage || '';
+    el.ratingError.textContent = ratingMessage || '';
+  }
+
+  function setNextQuizEnabled(enabled) {
+    el.nextQuizBtn.disabled = !enabled;
+  }
+
+  function renderResults(scores, winnerSummary) {
     clearChildren(el.resultsList);
 
     const summaryText = doc.createElement('p');
-    summaryText.textContent = winnerText;
+    if (winnerSummary.winners.length === 0) {
+      summaryText.textContent = winnerSummary.textBeforeNames;
+    } else {
+      summaryText.appendChild(doc.createTextNode(winnerSummary.textBeforeNames));
+      const winnerNames = doc.createElement('strong');
+      winnerNames.textContent = winnerSummary.winners.join(', ');
+      summaryText.appendChild(winnerNames);
+      summaryText.appendChild(doc.createTextNode(winnerSummary.textAfterNames));
+    }
     el.resultsList.appendChild(summaryText);
 
     const table = doc.createElement('table');
     const thead = doc.createElement('thead');
     const headRow = doc.createElement('tr');
-    ['Player', 'Movie', 'Rating', 'Bonus'].forEach(label => appendCell(headRow, 'th', label));
+    ['Player', 'Movie', 'Rating', 'Year', 'Bonus'].forEach(label => appendCell(headRow, 'th', label));
     thead.appendChild(headRow);
 
     const tbody = doc.createElement('tbody');
@@ -241,7 +241,8 @@ export function createUI(doc) {
       const tr = doc.createElement('tr');
       appendCell(tr, 'td', score.name);
       appendCell(tr, 'td', score.title);
-      appendCell(tr, 'td', formatRating(score.rating));
+      appendValueWithMark(tr, formatRating(score.rating), score.correctRating);
+      appendValueWithMark(tr, formatYear(score.startYear), score.correctYear);
       appendCell(tr, 'td', String(score.points));
       tbody.appendChild(tr);
     });
@@ -249,6 +250,20 @@ export function createUI(doc) {
     table.appendChild(thead);
     table.appendChild(tbody);
     el.resultsList.appendChild(table);
+  }
+
+  function appendValueWithMark(row, valueText, isCorrect) {
+    const cell = doc.createElement('td');
+    const value = doc.createElement('span');
+    value.textContent = `${valueText} `;
+    cell.appendChild(value);
+
+    const mark = doc.createElement('span');
+    mark.textContent = isCorrect ? '✓' : '✗';
+    mark.className = isCorrect ? 'mark-correct' : 'mark-incorrect';
+    cell.appendChild(mark);
+
+    row.appendChild(cell);
   }
 
   function clearResults() {
@@ -271,7 +286,9 @@ export function createUI(doc) {
     renderSearchResults,
     getSelectedMatchIndex,
     renderQuiz,
-    getQuizChecks,
+    getQuizAnswerInputs,
+    setQuizFieldErrors,
+    setNextQuizEnabled,
     renderResults,
     clearResults
   };
