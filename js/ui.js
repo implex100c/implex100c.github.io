@@ -14,6 +14,8 @@ export function formatRating(rating) {
   return Number(rating).toFixed(1);
 }
 
+const IMDB_TITLE_BASE_URL = 'https://www.imdb.com/title/';
+
 function formatDecade(year) {
   if (!Number.isFinite(year)) {
     return 'Unknown';
@@ -49,6 +51,11 @@ export function createUI(doc) {
     nextQuizBtn: doc.getElementById('nextQuizBtn'),
     resultsList: doc.getElementById('resultsList'),
     restartBtn: doc.getElementById('restartBtn')
+    ,
+    footerStartBtn: doc.getElementById('footerStartBtn'),
+    footerConfirmBtn: doc.getElementById('footerConfirmBtn'),
+    footerNextBtn: doc.getElementById('footerNextBtn'),
+    footerRestartBtn: doc.getElementById('footerRestartBtn')
   };
 
   function clearChildren(node) {
@@ -64,11 +71,36 @@ export function createUI(doc) {
     return cell;
   }
 
+  function createMovieLink(tconst, title) {
+    const link = doc.createElement('a');
+    link.className = 'movie-link';
+    link.textContent = title;
+    if (typeof tconst === 'string' && tconst.startsWith('tt')) {
+      link.href = `${IMDB_TITLE_BASE_URL}${tconst}/`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    } else {
+      link.href = '#';
+      link.addEventListener('click', event => event.preventDefault());
+    }
+    return link;
+  }
+
+  function appendQuestionText(container, prefix, title, suffix) {
+    clearChildren(container);
+    container.textContent = `${prefix}${title}${suffix}`;
+  }
+
   function setStage(stage) {
     el.lobby.classList.toggle('hidden', stage !== 'lobby');
     el.movieEntry.classList.toggle('hidden', stage !== 'movieEntry');
     el.quiz.classList.toggle('hidden', stage !== 'quiz');
     el.results.classList.toggle('hidden', stage !== 'results');
+
+    el.footerStartBtn.classList.toggle('hidden', stage !== 'lobby');
+    el.footerConfirmBtn.classList.toggle('hidden', stage !== 'movieEntry');
+    el.footerNextBtn.classList.toggle('hidden', stage !== 'quiz');
+    el.footerRestartBtn.classList.toggle('hidden', stage !== 'results');
   }
 
   function getPlayerNameValues() {
@@ -99,10 +131,11 @@ export function createUI(doc) {
 
   function updateStartEnabled(numPlayers) {
     el.startBtn.disabled = numPlayers < 2;
+    el.footerStartBtn.disabled = numPlayers < 2;
   }
 
-  function setMoviePrompt(playerName) {
-    el.movieEntryTitle.textContent = playerName;
+  function setMoviePrompt(playerName, playerNumber) {
+    el.movieEntryTitle.textContent = `Player ${playerNumber}: ${playerName}`;
     el.moviePrompt.textContent = "What's your guilty pleasure movie?";
   }
 
@@ -123,6 +156,7 @@ export function createUI(doc) {
 
   function setConfirmEnabled(enabled) {
     el.confirmBtn.disabled = !enabled;
+    el.footerConfirmBtn.disabled = !enabled;
   }
 
   function renderSearchError(message) {
@@ -143,33 +177,34 @@ export function createUI(doc) {
   function renderSearchResults(matches) {
     clearChildren(el.searchResults);
 
-    const table = doc.createElement('table');
-    const thead = doc.createElement('thead');
-    const headRow = doc.createElement('tr');
-    appendCell(headRow, 'th', 'Movie Title');
-    appendCell(headRow, 'th', 'Choice');
-    thead.appendChild(headRow);
-
-    const tbody = doc.createElement('tbody');
+    const list = doc.createElement('div');
+    list.className = 'search-options';
 
     matches.forEach((movie, idx) => {
-      const row = doc.createElement('tr');
-      appendCell(row, 'td', `${movie.primaryTitle} (${formatDecade(movie.startYear)})`);
+      const option = doc.createElement('label');
+      option.className = 'search-option';
 
-      const choiceCell = doc.createElement('td');
       const radio = doc.createElement('input');
       radio.type = 'radio';
       radio.name = 'match';
       radio.value = String(idx);
-      choiceCell.appendChild(radio);
-      row.appendChild(choiceCell);
+      option.appendChild(radio);
 
-      tbody.appendChild(row);
+      const textWrap = doc.createElement('div');
+      const title = doc.createElement('div');
+      title.className = 'search-option-title';
+      title.textContent = movie.primaryTitle;
+      const meta = doc.createElement('div');
+      meta.className = 'search-option-meta';
+      meta.textContent = `${formatDecade(movie.startYear)} • ${movie.numVotes.toLocaleString()} votes`;
+      textWrap.appendChild(title);
+      textWrap.appendChild(meta);
+      option.appendChild(textWrap);
+
+      list.appendChild(option);
     });
 
-    table.appendChild(thead);
-    table.appendChild(tbody);
-    el.searchResults.appendChild(table);
+    el.searchResults.appendChild(list);
   }
 
   function getSelectedMatchIndex() {
@@ -186,11 +221,20 @@ export function createUI(doc) {
     return idx;
   }
 
-  function renderQuiz(entry, playerName) {
-    el.quizTitle.textContent = playerName;
-    el.quizMoviePrompt.textContent = `Movie: ${entry.primaryTitle}`;
-    el.yearPrompt.textContent = `What year was "${entry.primaryTitle}" released?`;
-    el.ratingPrompt.textContent = `What rating out of 10 does "${entry.primaryTitle}" have?`;
+  function updateSearchSelectionStyles() {
+    const options = el.searchResults.querySelectorAll('.search-option');
+    options.forEach(option => {
+      const input = option.querySelector('input[name="match"]');
+      option.classList.toggle('selected', Boolean(input && input.checked));
+    });
+  }
+
+  function renderQuiz(entry, playerName, playerNumber) {
+    el.quizTitle.textContent = `Player ${playerNumber}: ${playerName}`;
+    clearChildren(el.quizMoviePrompt);
+    el.quizMoviePrompt.appendChild(createMovieLink(entry.tconst, entry.primaryTitle));
+    appendQuestionText(el.yearPrompt, 'What year was "', entry.primaryTitle, '" released?');
+    appendQuestionText(el.ratingPrompt, 'What rating out of 10 does "', entry.primaryTitle, '" have?');
     el.yearGuessInput.value = '';
     el.ratingGuessInput.value = '';
     setQuizFieldErrors('', '');
@@ -212,6 +256,7 @@ export function createUI(doc) {
 
   function setNextQuizEnabled(enabled) {
     el.nextQuizBtn.disabled = !enabled;
+    el.footerNextBtn.disabled = !enabled;
   }
 
   function renderResults(scores, winnerSummary) {
@@ -236,11 +281,14 @@ export function createUI(doc) {
     thead.appendChild(headRow);
 
     const tbody = doc.createElement('tbody');
+    const winnerNames = new Set(winnerSummary.winners);
 
     scores.forEach(score => {
       const tr = doc.createElement('tr');
-      appendCell(tr, 'td', score.name);
-      appendCell(tr, 'td', score.title);
+      appendCell(tr, 'td', winnerNames.has(score.name) ? `🏆 ${score.name}` : score.name);
+      const movieCell = doc.createElement('td');
+      movieCell.appendChild(createMovieLink(score.tconst, score.title));
+      tr.appendChild(movieCell);
       appendValueWithMark(tr, formatRating(score.rating), score.correctRating);
       appendValueWithMark(tr, formatYear(score.startYear), score.correctYear);
       appendCell(tr, 'td', String(score.points));
@@ -250,6 +298,15 @@ export function createUI(doc) {
     table.appendChild(thead);
     table.appendChild(tbody);
     el.resultsList.appendChild(table);
+
+    const cards = doc.createElement('div');
+    cards.className = 'results-cards';
+
+    scores.forEach(score => {
+      cards.appendChild(createResultCard(score, winnerNames.has(score.name)));
+    });
+
+    el.resultsList.appendChild(cards);
   }
 
   function appendValueWithMark(row, valueText, isCorrect) {
@@ -264,6 +321,56 @@ export function createUI(doc) {
     cell.appendChild(mark);
 
     row.appendChild(cell);
+  }
+
+  function createResultCard(score, isWinner) {
+    const card = doc.createElement('article');
+    card.className = 'result-card';
+
+    const header = doc.createElement('div');
+    header.className = 'result-card-header';
+    const player = doc.createElement('span');
+    player.textContent = isWinner ? `🏆 ${score.name}` : score.name;
+    header.appendChild(player);
+    const bonus = doc.createElement('span');
+    bonus.textContent = `Bonus: ${score.points}`;
+    header.appendChild(bonus);
+    card.appendChild(header);
+
+    card.appendChild(createResultCardRow('Movie', createMovieLink(score.tconst, score.title)));
+    card.appendChild(createResultCardRow('Rating', createMarkedValue(formatRating(score.rating), score.correctRating)));
+    card.appendChild(createResultCardRow('Year', createMarkedValue(formatYear(score.startYear), score.correctYear)));
+
+    return card;
+  }
+
+  function createResultCardRow(keyText, valueNode) {
+    const row = doc.createElement('div');
+    row.className = 'result-card-row';
+
+    const key = doc.createElement('span');
+    key.className = 'result-card-key';
+    key.textContent = keyText;
+    row.appendChild(key);
+
+    const valueWrap = doc.createElement('span');
+    valueWrap.className = 'result-card-value';
+    valueWrap.appendChild(valueNode);
+    row.appendChild(valueWrap);
+
+    return row;
+  }
+
+  function createMarkedValue(valueText, isCorrect) {
+    const wrap = doc.createElement('span');
+    const value = doc.createElement('span');
+    value.textContent = `${valueText} `;
+    wrap.appendChild(value);
+    const mark = doc.createElement('span');
+    mark.textContent = isCorrect ? '✓' : '✗';
+    mark.className = isCorrect ? 'mark-correct' : 'mark-incorrect';
+    wrap.appendChild(mark);
+    return wrap;
   }
 
   function clearResults() {
@@ -285,6 +392,7 @@ export function createUI(doc) {
     renderNoMatches,
     renderSearchResults,
     getSelectedMatchIndex,
+    updateSearchSelectionStyles,
     renderQuiz,
     getQuizAnswerInputs,
     setQuizFieldErrors,

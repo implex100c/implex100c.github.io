@@ -65,7 +65,7 @@ function showCurrentMoviePrompt() {
     return;
   }
 
-  ui.setMoviePrompt(player.name);
+  ui.setMoviePrompt(player.name, state.currentIndex + 1);
   ui.clearMovieEntryForm();
   ui.setSearchEnabled(state.dataStatus === 'ready');
   ui.focusMovieTitle();
@@ -179,7 +179,7 @@ function renderCurrentQuiz() {
 
   const player = state.players.find(p => p.id === entry.playerId);
   const playerName = player ? player.name : 'Unknown Player';
-  ui.renderQuiz(entry, playerName);
+  ui.renderQuiz(entry, playerName, state.currentIndex + 1);
 }
 
 function handleQuizNext() {
@@ -292,6 +292,7 @@ function renderResults() {
     return {
       name: player.name,
       title: entry ? entry.primaryTitle : 'N/A',
+      tconst: entry ? entry.tconst : null,
       rating: entry ? entry.averageRating : null,
       startYear: entry ? entry.startYear : null,
       correctYear: entry ? Boolean(entry.correctYear) : false,
@@ -369,9 +370,11 @@ async function bootstrap() {
 
   ui.el.numPlayersInput.addEventListener('input', refreshLobbyInputs);
   ui.el.startBtn.addEventListener('click', handleStartGame);
+  ui.el.footerStartBtn.addEventListener('click', handleStartGame);
 
   ui.el.searchBtn.addEventListener('click', handleSearch);
   ui.el.confirmBtn.addEventListener('click', handleConfirmSelection);
+  ui.el.footerConfirmBtn.addEventListener('click', handleConfirmSelection);
 
   ui.el.movieTitleInput.addEventListener('keydown', event => {
     if (event.key !== 'Enter') {
@@ -393,6 +396,7 @@ async function bootstrap() {
       return;
     }
 
+    ui.updateSearchSelectionStyles();
     const idx = ui.getSelectedMatchIndex();
     const valid = idx !== null && Boolean(state.matches[idx]);
     ui.setConfirmEnabled(valid);
@@ -400,6 +404,8 @@ async function bootstrap() {
 
   ui.el.nextQuizBtn.addEventListener('click', handleQuizNext);
   ui.el.restartBtn.addEventListener('click', handleRestart);
+  ui.el.footerNextBtn.addEventListener('click', handleQuizNext);
+  ui.el.footerRestartBtn.addEventListener('click', handleRestart);
 
   state.dataStatus = 'loading';
   try {

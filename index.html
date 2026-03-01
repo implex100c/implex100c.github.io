@@ -12,19 +12,25 @@
       --space-2: 0.75rem;
       --space-3: 1rem;
       --space-4: 1.25rem;
-      --radius: 8px;
+      --radius: 6px;
       --surface: #161616;
-      --border: #2f2f2f;
-      --muted: #bdbdbd;
+      --surface-soft: #1f1f1f;
+      --border: #2a2a2a;
+      --muted: #b3b3b3;
+      --text: #ffffff;
+      --accent: #e50914;
+      --accent-press: #b20710;
+      --success: #46d369;
+      --danger: #ff6b6b;
     }
 
     body {
-      font-family: sans-serif;
+      font-family: "Helvetica Neue", "Segoe UI", Arial, sans-serif;
       margin: 0;
       padding: 1rem;
       padding-bottom: 2.75rem;
-      background: #121212;
-      color: #e0e0e0;
+      background: #0b0b0b;
+      color: var(--text);
     }
 
     .hidden {
@@ -35,10 +41,17 @@
     button,
     select {
       font-size: 1rem;
-      padding: 0.5rem;
+      padding: 0.625rem 0.75rem;
       margin: 0.5rem 0;
       width: 100%;
       box-sizing: border-box;
+      border-radius: var(--radius);
+    }
+
+    button,
+    input,
+    select {
+      min-height: 44px;
     }
 
     #lobby,
@@ -47,40 +60,77 @@
     #results {
       max-width: 600px;
       margin: auto;
+      background: #0f0f0f;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 0.9rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
 
     label {
       display: block;
       margin-bottom: 0.25rem;
+      color: #e5e5e5;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       margin: 1rem 0;
+      background: rgba(20, 20, 20, 0.9);
     }
 
     th,
     td {
-      border: 1px solid #333;
+      border: 1px solid var(--border);
       padding: 0.5rem;
       text-align: left;
     }
 
     th {
-      background: #1f1f1f;
+      background: linear-gradient(180deg, #222 0%, #191919 100%);
+      color: #f5f5f5;
     }
 
     button {
-      background: #333;
-      color: #e0e0e0;
-      border: none;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-press) 100%);
+      color: #fff;
+      border: 1px solid #7a0d12;
       cursor: pointer;
+      font-weight: 700;
+      transition: filter 140ms ease, transform 120ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.07);
+      transform: translateY(-1px);
     }
 
     button:disabled {
-      opacity: 0.5;
+      background: #2e2e2e;
+      color: #8f8f8f;
+      border-color: #3c3c3c;
       cursor: not-allowed;
+    }
+
+    input,
+    select {
+      background: #2b2b2b;
+      color: #fff;
+      border: 1px solid #5c5c5c;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.35);
     }
 
     th:last-child,
@@ -89,7 +139,7 @@
     }
 
     .error-text {
-      color: #ff6b6b;
+      color: var(--danger);
     }
 
     #quiz table {
@@ -132,17 +182,11 @@
       margin: 0.4rem 0;
     }
 
-    .quiz-card {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      padding: var(--space-4);
-      margin: var(--space-3) 0;
-    }
-
     .quiz-movie {
       margin: 0 0 var(--space-3);
-      color: var(--muted);
+      color: #d6d6d6;
+      font-size: 1.1rem;
+      font-weight: 650;
     }
 
     .quiz-fields {
@@ -169,7 +213,7 @@
       margin-top: 0.35rem;
       margin-bottom: 0;
       font-size: 0.85rem;
-      color: #ff6b6b;
+      color: var(--danger);
       min-height: 1em;
     }
 
@@ -179,23 +223,212 @@
       right: 0;
       bottom: 0;
       margin: 0;
-      padding: 0.45rem 0.75rem;
+      padding: 0.5rem 0.75rem;
       font-size: 0.75rem;
-      color: #c7c7c7;
-      background: rgba(18, 18, 18, 0.92);
-      border-top: 1px solid #2b2b2b;
+      color: #8f8f8f;
+      background: rgba(0, 0, 0, 0.92);
+      border-top: 1px solid var(--border);
       text-align: center;
       z-index: 1000;
     }
 
+    .footer-actions {
+      max-width: 600px;
+      margin: 0 auto 0.35rem;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.4rem;
+    }
+
+    .footer-action {
+      margin: 0;
+      min-height: 40px;
+      font-size: 0.95rem;
+      padding: 0.45rem 0.7rem;
+    }
+
+    .site-meta-text {
+      font-size: 0.75rem;
+      line-height: 1.2;
+    }
+
     .mark-correct {
-      color: #4ade80;
+      color: var(--success);
       font-weight: 700;
     }
 
     .mark-incorrect {
-      color: #f87171;
+      color: var(--danger);
       font-weight: 700;
+    }
+
+    .movie-link {
+      color: #ffffff;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .movie-link:hover {
+      color: #ffdbdd;
+    }
+
+    .results-cards {
+      display: none;
+    }
+
+    .result-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #121212;
+      padding: 0.75rem;
+      margin: 0.65rem 0;
+    }
+
+    .result-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .result-card-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin: 0.3rem 0;
+      font-size: 0.95rem;
+    }
+
+    .result-card-key {
+      color: var(--muted);
+      flex: 0 0 auto;
+    }
+
+    .result-card-value {
+      text-align: right;
+      flex: 1 1 auto;
+      word-break: break-word;
+    }
+
+    #searchResults {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .search-options {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .search-option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      background: #141414;
+      cursor: pointer;
+    }
+
+    .search-option:hover {
+      border-color: #4a4a4a;
+      background: #181818;
+    }
+
+    .search-option input[type="radio"] {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin: 0;
+      min-height: 0;
+      accent-color: var(--accent);
+    }
+
+    .search-option.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(229, 9, 20, 0.35);
+      background: #1a1213;
+    }
+
+    .search-option-title {
+      font-weight: 650;
+      line-height: 1.25;
+      word-break: break-word;
+    }
+
+    .search-option-meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 0.75rem;
+        padding-bottom: 2.75rem;
+      }
+
+      #lobby,
+      #movie-entry,
+      #quiz,
+      #results {
+        padding: 0.8rem;
+        border-radius: 8px;
+      }
+
+      h1 {
+        font-size: 2rem;
+        line-height: 1.1;
+        margin-bottom: 0.75rem;
+      }
+
+      label {
+        font-size: 0.97rem;
+        line-height: 1.35;
+      }
+
+      .quiz-movie {
+        font-size: 1rem;
+      }
+
+      .quiz-fields {
+        padding-left: 1rem;
+      }
+
+      .quiz-fields li {
+        margin-bottom: 0.85rem;
+      }
+
+      .site-meta {
+        font-size: 0.68rem;
+      }
+
+      .footer-action {
+        min-height: 38px;
+        font-size: 0.92rem;
+      }
+
+      #results table {
+        display: none;
+      }
+
+      .results-cards {
+        display: block;
+      }
+    }
+
+    /* Stage action buttons are rendered in sticky footer */
+    #startBtn,
+    #confirmBtn,
+    #nextQuizBtn,
+    #restartBtn {
+      display: none;
     }
   </style>
 </head>
@@ -220,21 +453,19 @@
 
   <div id="quiz" class="hidden">
     <h1 id="quizTitle">Quiz</h1>
-    <div class="quiz-card">
-      <p id="quizMoviePrompt" class="quiz-movie"></p>
-      <ol class="quiz-fields">
-        <li>
-          <label for="yearGuessInput" id="yearPrompt">What year was this movie released?</label>
-          <input type="number" id="yearGuessInput" min="1900" placeholder="e.g. 2001" inputmode="numeric" />
-          <p id="yearError" class="field-error"></p>
-        </li>
-        <li>
-          <label for="ratingGuessInput" id="ratingPrompt">What rating out of 10 does this movie have?</label>
-          <input type="number" id="ratingGuessInput" min="0" max="10" step="0.1" placeholder="e.g. 7.7" inputmode="decimal" />
-          <p id="ratingError" class="field-error"></p>
-        </li>
-      </ol>
-    </div>
+    <p id="quizMoviePrompt" class="quiz-movie"></p>
+    <ol class="quiz-fields">
+      <li>
+        <label for="yearGuessInput" id="yearPrompt">What year was this movie released?</label>
+        <input type="number" id="yearGuessInput" min="1900" placeholder="e.g. 2001" inputmode="numeric" />
+        <p id="yearError" class="field-error"></p>
+      </li>
+      <li>
+        <label for="ratingGuessInput" id="ratingPrompt">What rating out of 10 does this movie have?</label>
+        <input type="number" id="ratingGuessInput" min="0" max="10" step="0.1" placeholder="e.g. 7.7" inputmode="decimal" />
+        <p id="ratingError" class="field-error"></p>
+      </li>
+    </ol>
     <button id="nextQuizBtn">Next</button>
   </div>
 
@@ -244,7 +475,15 @@
     <button id="restartBtn">Restart Game</button>
   </div>
 
-  <footer class="site-meta">Version 1.2.0 | Last updated March 1, 2026</footer>
+  <footer class="site-meta">
+    <div class="footer-actions">
+      <button id="footerStartBtn" class="footer-action">Start Game</button>
+      <button id="footerConfirmBtn" class="footer-action" disabled>Confirm</button>
+      <button id="footerNextBtn" class="footer-action">Next</button>
+      <button id="footerRestartBtn" class="footer-action">Restart Game</button>
+    </div>
+    <div class="site-meta-text">Version 1.2.0 | Last updated March 1, 2026</div>
+  </footer>
 
   <script type="module" src="./js/main.js"></script>
 </body>
