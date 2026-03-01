@@ -16,6 +16,9 @@ const state = createInitialState();
 const ui = createUI(document);
 const MIN_VALID_YEAR = 1900;
 const MAX_VALID_YEAR = new Date().getFullYear() + 1;
+const YEAR_FOUR_DIGIT_RE = /^\d{4}$/;
+const RATING_INTEGER_RE = /^(?:10|[0-9])$/;
+const RATING_ONE_DECIMAL_RE = /^(?:10\.0|[0-9]\.[0-9])$/;
 
 function createPlayerId(index) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -177,7 +180,7 @@ function renderCurrentQuiz() {
     return;
   }
 
-  const player = state.players.find(p => p.id === entry.playerId);
+  const player = state.playersById.get(entry.playerId);
   const playerName = player ? player.name : 'Unknown Player';
   ui.renderQuiz(entry, playerName, state.currentIndex + 1);
 }
@@ -225,7 +228,7 @@ function validateQuizInputs({ showRequired }) {
     if (showRequired) {
       yearError = 'Enter a year.';
     }
-  } else if (!/^\d{4}$/.test(yearRaw)) {
+  } else if (!YEAR_FOUR_DIGIT_RE.test(yearRaw)) {
     yearError = 'Year must be a 4-digit number.';
   } else {
     yearGuess = Number.parseInt(yearRaw, 10);
@@ -240,8 +243,8 @@ function validateQuizInputs({ showRequired }) {
       ratingError = 'Enter a rating.';
     }
   } else {
-    const isIntegerRating = /^(?:10|[0-9])$/.test(ratingRaw);
-    const isOneDecimalRating = /^(?:10\.0|[0-9]\.[0-9])$/.test(ratingRaw);
+    const isIntegerRating = RATING_INTEGER_RE.test(ratingRaw);
+    const isOneDecimalRating = RATING_ONE_DECIMAL_RE.test(ratingRaw);
 
     if (!isIntegerRating && !isOneDecimalRating) {
       ratingError = 'Rating must be one decimal place (e.g. 7.7).';

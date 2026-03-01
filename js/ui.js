@@ -67,22 +67,22 @@ export function createUI(doc) {
   }
 
   function createMovieLink(tconst, title) {
+    if (!(typeof tconst === 'string' && tconst.startsWith('tt'))) {
+      const text = doc.createElement('span');
+      text.textContent = title;
+      return text;
+    }
+
     const link = doc.createElement('a');
     link.className = 'movie-link';
     link.textContent = title;
-    if (typeof tconst === 'string' && tconst.startsWith('tt')) {
-      link.href = `${IMDB_TITLE_BASE_URL}${tconst}/`;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-    } else {
-      link.href = '#';
-      link.addEventListener('click', event => event.preventDefault());
-    }
+    link.href = `${IMDB_TITLE_BASE_URL}${tconst}/`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     return link;
   }
 
   function appendQuestionText(container, prefix, title, suffix) {
-    clearChildren(container);
     container.textContent = `${prefix}${title}${suffix}`;
   }
 
@@ -270,17 +270,8 @@ export function createUI(doc) {
     const tbody = doc.createElement('tbody');
     const winnerNames = new Set(winnerSummary.winners);
 
-    scores.forEach(score => {
-      const tr = doc.createElement('tr');
-      appendCell(tr, 'td', winnerNames.has(score.name) ? `🏆 ${score.name}` : score.name);
-      const movieCell = doc.createElement('td');
-      movieCell.appendChild(createMovieLink(score.tconst, score.title));
-      tr.appendChild(movieCell);
-      appendValueWithMark(tr, formatRating(score.rating), score.correctRating);
-      appendValueWithMark(tr, formatYear(score.startYear), score.correctYear);
-      appendCell(tr, 'td', String(score.points));
-      tbody.appendChild(tr);
-    });
+    const rows = scores.map(score => createResultRowModel(score, winnerNames.has(score.name)));
+    rows.forEach(row => tbody.appendChild(renderDesktopResultRow(row)));
 
     table.appendChild(thead);
     table.appendChild(tbody);
@@ -289,9 +280,7 @@ export function createUI(doc) {
     const cards = doc.createElement('div');
     cards.className = 'results-cards';
 
-    scores.forEach(score => {
-      cards.appendChild(createResultCard(score, winnerNames.has(score.name)));
-    });
+    rows.forEach(row => cards.appendChild(renderMobileResultCard(row)));
 
     el.resultsList.appendChild(cards);
   }
@@ -310,23 +299,55 @@ export function createUI(doc) {
     row.appendChild(cell);
   }
 
-  function createResultCard(score, isWinner) {
+  function createResultRowModel(score, isWinner) {
+    return {
+      playerLabel: isWinner ? `🏆 ${score.name}` : score.name,
+      tconst: score.tconst,
+      title: score.title,
+      ratingText: formatRating(score.rating),
+      yearText: formatYear(score.startYear),
+      correctRating: score.correctRating,
+      correctYear: score.correctYear,
+      bonusText: String(score.points)
+    };
+  }
+
+  function renderDesktopResultRow(row) {
+    const tr = doc.createElement('tr');
+    appendCell(tr, 'td', row.playerLabel);
+    const movieCell = doc.createElement('td');
+    movieCell.appendChild(createMovieLink(row.tconst, row.title));
+    tr.appendChild(movieCell);
+
+    const ratingCell = doc.createElement('td');
+    ratingCell.appendChild(createMarkedValue(row.ratingText, row.correctRating));
+    tr.appendChild(ratingCell);
+
+    const yearCell = doc.createElement('td');
+    yearCell.appendChild(createMarkedValue(row.yearText, row.correctYear));
+    tr.appendChild(yearCell);
+
+    appendCell(tr, 'td', row.bonusText);
+    return tr;
+  }
+
+  function renderMobileResultCard(row) {
     const card = doc.createElement('article');
     card.className = 'result-card';
 
     const header = doc.createElement('div');
     header.className = 'result-card-header';
     const player = doc.createElement('span');
-    player.textContent = isWinner ? `🏆 ${score.name}` : score.name;
+    player.textContent = row.playerLabel;
     header.appendChild(player);
     const bonus = doc.createElement('span');
-    bonus.textContent = `Bonus: ${score.points}`;
+    bonus.textContent = `Bonus: ${row.bonusText}`;
     header.appendChild(bonus);
     card.appendChild(header);
 
-    card.appendChild(createResultCardRow('Movie', createMovieLink(score.tconst, score.title)));
-    card.appendChild(createResultCardRow('Rating', createMarkedValue(formatRating(score.rating), score.correctRating)));
-    card.appendChild(createResultCardRow('Year', createMarkedValue(formatYear(score.startYear), score.correctYear)));
+    card.appendChild(createResultCardRow('Movie', createMovieLink(row.tconst, row.title)));
+    card.appendChild(createResultCardRow('Rating', createMarkedValue(row.ratingText, row.correctRating)));
+    card.appendChild(createResultCardRow('Year', createMarkedValue(row.yearText, row.correctYear)));
 
     return card;
   }

@@ -12,6 +12,7 @@ export function createInitialState() {
     dataError: '',
     moviesData: [],
     players: [],
+    playersById: new Map(),
     entriesByPlayerId: new Map(),
     quizOrder: [],
     currentIndex: 0,
@@ -36,6 +37,7 @@ export function setStage(state, nextStage) {
 export function resetGameState(state) {
   state.stage = 'lobby';
   state.players = [];
+  state.playersById = new Map();
   state.entriesByPlayerId = new Map();
   state.quizOrder = [];
   state.currentIndex = 0;
@@ -44,6 +46,7 @@ export function resetGameState(state) {
 
 export function beginMovieEntry(state, players) {
   state.players = players;
+  state.playersById = new Map(players.map(player => [player.id, player]));
   state.entriesByPlayerId = new Map();
   state.quizOrder = players.map(player => player.id);
   state.currentIndex = 0;

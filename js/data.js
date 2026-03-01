@@ -50,6 +50,39 @@ export function normalizeMovieRecord(raw) {
   return normalized;
 }
 
+function compareMovies(a, b) {
+  if (b.numVotes !== a.numVotes) {
+    return b.numVotes - a.numVotes;
+  }
+
+  const titleCmp = a.primaryTitle.localeCompare(b.primaryTitle);
+  if (titleCmp !== 0) {
+    return titleCmp;
+  }
+
+  return a.tconst.localeCompare(b.tconst);
+}
+
+function buildFirstCharIndex(movies) {
+  const index = new Map();
+
+  for (const movie of movies) {
+    const key = movie.normalizedTitle[0];
+    if (!key) {
+      continue;
+    }
+
+    const bucket = index.get(key);
+    if (bucket) {
+      bucket.push(movie);
+    } else {
+      index.set(key, [movie]);
+    }
+  }
+
+  return index;
+}
+
 export async function loadMovies(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -61,15 +94,22 @@ export async function loadMovies(url) {
     throw new Error(`${url} is not an array`);
   }
 
-  const movies = [];
-  for (const row of payload) {
-    const normalized = normalizeMovieRecord(row);
-    if (normalized) {
-      movies.push(normalized);
-    }
-  }
+  // Fast-path for prebuilt slim payloads that already include normalizedTitle.
+  const trustedSlimShape = payload.length > 0
+    && typeof payload[0] === 'object'
+    && payload[0] !== null
+    && typeof payload[0].normalizedTitle === 'string';
 
-  return movies;
+  const movies = trustedSlimShape
+    ? payload.filter(row => row && typeof row.tconst === 'string' && typeof row.primaryTitle === 'string')
+    : payload.map(normalizeMovieRecord).filter(Boolean);
+
+  movies.sort(compareMovies);
+
+  return {
+    movies,
+    firstCharIndex: buildFirstCharIndex(movies)
+  };
 }
 
 export function searchMovies(moviesData, query, limit = 10) {
@@ -78,19 +118,21 @@ export function searchMovies(moviesData, query, limit = 10) {
     return [];
   }
 
-  const matches = moviesData.filter(movie => movie.normalizedTitle.includes(normalizedQuery));
-  matches.sort((a, b) => {
-    if (b.numVotes !== a.numVotes) {
-      return b.numVotes - a.numVotes;
+  const list = Array.isArray(moviesData)
+    ? moviesData
+    : moviesData.firstCharIndex.get(normalizedQuery[0]) || [];
+
+  const matches = [];
+  for (const movie of list) {
+    if (!movie.normalizedTitle.includes(normalizedQuery)) {
+      continue;
     }
 
-    const titleCmp = a.primaryTitle.localeCompare(b.primaryTitle);
-    if (titleCmp !== 0) {
-      return titleCmp;
+    matches.push(movie);
+    if (matches.length >= limit) {
+      break;
     }
+  }
 
-    return a.tconst.localeCompare(b.tconst);
-  });
-
-  return matches.slice(0, limit);
+  return matches;
 }
