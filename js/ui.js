@@ -222,17 +222,17 @@ export function createUI(doc) {
     };
   }
 
-  function renderResults(scores) {
+  function renderResults(scores, winnerText) {
     clearChildren(el.resultsList);
 
-    const ruleText = doc.createElement('p');
-    ruleText.textContent = 'Winner order: lowest rating first, then highest score, then name (A-Z) for final tie-breaks.';
-    el.resultsList.appendChild(ruleText);
+    const summaryText = doc.createElement('p');
+    summaryText.textContent = winnerText;
+    el.resultsList.appendChild(summaryText);
 
     const table = doc.createElement('table');
     const thead = doc.createElement('thead');
     const headRow = doc.createElement('tr');
-    ['Player', 'Movie Title', 'Rating (lower is better)', 'Score (higher is better)'].forEach(label => appendCell(headRow, 'th', label));
+    ['Player', 'Movie', 'Rating', 'Bonus'].forEach(label => appendCell(headRow, 'th', label));
     thead.appendChild(headRow);
 
     const tbody = doc.createElement('tbody');

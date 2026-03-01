@@ -236,7 +236,32 @@ function renderResults() {
     return a.name.localeCompare(b.name);
   });
 
-  ui.renderResults(scores);
+  const winnerText = buildWinnerText(scores);
+  ui.renderResults(scores, winnerText);
+}
+
+function buildWinnerText(scores) {
+  if (scores.length === 0) {
+    return 'The winner is unavailable.';
+  }
+
+  const top = scores[0];
+  const topRating = Number.isFinite(top.rating) ? top.rating : Number.POSITIVE_INFINITY;
+  const topPoints = top.points;
+
+  const winners = scores
+    .filter(score => {
+      const scoreRating = Number.isFinite(score.rating) ? score.rating : Number.POSITIVE_INFINITY;
+      return scoreRating === topRating && score.points === topPoints;
+    })
+    .map(score => score.name)
+    .sort((a, b) => a.localeCompare(b));
+
+  if (winners.length === 1) {
+    return `The winner is ${winners[0]} with the lowest rating and highest score!`;
+  }
+
+  return `The winners are ${winners.join(', ')} with the lowest rating and highest score!`;
 }
 
 function handleRestart() {
