@@ -51,11 +51,6 @@ export function createUI(doc) {
     nextQuizBtn: doc.getElementById('nextQuizBtn'),
     resultsList: doc.getElementById('resultsList'),
     restartBtn: doc.getElementById('restartBtn')
-    ,
-    footerStartBtn: doc.getElementById('footerStartBtn'),
-    footerConfirmBtn: doc.getElementById('footerConfirmBtn'),
-    footerNextBtn: doc.getElementById('footerNextBtn'),
-    footerRestartBtn: doc.getElementById('footerRestartBtn')
   };
 
   function clearChildren(node) {
@@ -96,11 +91,6 @@ export function createUI(doc) {
     el.movieEntry.classList.toggle('hidden', stage !== 'movieEntry');
     el.quiz.classList.toggle('hidden', stage !== 'quiz');
     el.results.classList.toggle('hidden', stage !== 'results');
-
-    el.footerStartBtn.classList.toggle('hidden', stage !== 'lobby');
-    el.footerConfirmBtn.classList.toggle('hidden', stage !== 'movieEntry');
-    el.footerNextBtn.classList.toggle('hidden', stage !== 'quiz');
-    el.footerRestartBtn.classList.toggle('hidden', stage !== 'results');
   }
 
   function getPlayerNameValues() {
@@ -131,7 +121,6 @@ export function createUI(doc) {
 
   function updateStartEnabled(numPlayers) {
     el.startBtn.disabled = numPlayers < 2;
-    el.footerStartBtn.disabled = numPlayers < 2;
   }
 
   function setMoviePrompt(playerName, playerNumber) {
@@ -156,7 +145,6 @@ export function createUI(doc) {
 
   function setConfirmEnabled(enabled) {
     el.confirmBtn.disabled = !enabled;
-    el.footerConfirmBtn.disabled = !enabled;
   }
 
   function renderSearchError(message) {
@@ -256,7 +244,6 @@ export function createUI(doc) {
 
   function setNextQuizEnabled(enabled) {
     el.nextQuizBtn.disabled = !enabled;
-    el.footerNextBtn.disabled = !enabled;
   }
 
   function renderResults(scores, winnerSummary) {

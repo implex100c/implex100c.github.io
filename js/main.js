@@ -370,11 +370,9 @@ async function bootstrap() {
 
   ui.el.numPlayersInput.addEventListener('input', refreshLobbyInputs);
   ui.el.startBtn.addEventListener('click', handleStartGame);
-  ui.el.footerStartBtn.addEventListener('click', handleStartGame);
 
   ui.el.searchBtn.addEventListener('click', handleSearch);
   ui.el.confirmBtn.addEventListener('click', handleConfirmSelection);
-  ui.el.footerConfirmBtn.addEventListener('click', handleConfirmSelection);
 
   ui.el.movieTitleInput.addEventListener('keydown', event => {
     if (event.key !== 'Enter') {
@@ -404,8 +402,6 @@ async function bootstrap() {
 
   ui.el.nextQuizBtn.addEventListener('click', handleQuizNext);
   ui.el.restartBtn.addEventListener('click', handleRestart);
-  ui.el.footerNextBtn.addEventListener('click', handleQuizNext);
-  ui.el.footerRestartBtn.addEventListener('click', handleRestart);
 
   state.dataStatus = 'loading';
   try {
