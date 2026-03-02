@@ -88,8 +88,10 @@ export function createUI(doc) {
   }
 
   function setStage(stage) {
-    el.lobby.classList.toggle('hidden', stage !== 'lobby');
-    el.lobbyRules.classList.toggle('hidden', stage !== 'lobby');
+    const showLobby = stage === 'lobby';
+    el.lobby.classList.toggle('hidden', !showLobby);
+    el.lobbyRules.classList.toggle('hidden', !showLobby);
+    el.lobbyRules.hidden = !showLobby;
     el.movieEntry.classList.toggle('hidden', stage !== 'movieEntry');
     el.quiz.classList.toggle('hidden', stage !== 'quiz');
     el.results.classList.toggle('hidden', stage !== 'results');
