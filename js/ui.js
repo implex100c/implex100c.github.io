@@ -28,6 +28,7 @@ function formatDecade(year) {
 export function createUI(doc) {
   const el = {
     lobby: doc.getElementById('lobby'),
+    lobbyRules: doc.getElementById('lobby-rules'),
     movieEntry: doc.getElementById('movie-entry'),
     quiz: doc.getElementById('quiz'),
     results: doc.getElementById('results'),
@@ -88,6 +89,7 @@ export function createUI(doc) {
 
   function setStage(stage) {
     el.lobby.classList.toggle('hidden', stage !== 'lobby');
+    el.lobbyRules.classList.toggle('hidden', stage !== 'lobby');
     el.movieEntry.classList.toggle('hidden', stage !== 'movieEntry');
     el.quiz.classList.toggle('hidden', stage !== 'quiz');
     el.results.classList.toggle('hidden', stage !== 'results');

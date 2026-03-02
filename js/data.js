@@ -83,6 +83,33 @@ function buildFirstCharIndex(movies) {
   return index;
 }
 
+function tokenizeForIndex(input) {
+  return String(input || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+function buildTokenIndex(movies) {
+  const index = new Map();
+
+  for (const movie of movies) {
+    const uniqueTokens = new Set(tokenizeForIndex(movie.primaryTitle));
+    for (const token of uniqueTokens) {
+      const bucket = index.get(token);
+      if (bucket) {
+        bucket.push(movie);
+      } else {
+        index.set(token, [movie]);
+      }
+    }
+  }
+
+  return index;
+}
+
 export async function loadMovies(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -108,7 +135,8 @@ export async function loadMovies(url) {
 
   return {
     movies,
-    firstCharIndex: buildFirstCharIndex(movies)
+    firstCharIndex: buildFirstCharIndex(movies),
+    tokenIndex: buildTokenIndex(movies)
   };
 }
 
@@ -120,7 +148,20 @@ export function searchMovies(moviesData, query, limit = 10) {
 
   const list = Array.isArray(moviesData)
     ? moviesData
-    : moviesData.firstCharIndex.get(normalizedQuery[0]) || [];
+    : (() => {
+      const queryTokens = tokenizeForIndex(query);
+      if (queryTokens.length === 0) {
+        return moviesData.movies;
+      }
+
+      const primaryBucket = moviesData.tokenIndex.get(queryTokens[0]);
+      if (primaryBucket && primaryBucket.length > 0) {
+        return primaryBucket;
+      }
+
+      // Fallback for edge cases where token index misses due to normalization mismatch.
+      return moviesData.movies;
+    })();
 
   const matches = [];
   for (const movie of list) {

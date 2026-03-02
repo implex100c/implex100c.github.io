@@ -10,11 +10,21 @@
 
 <body>
   <div id="lobby">
-    <h1>Guilty Pleasure Movie</h1>
-    <label for="numPlayers">Number of players:</label>
+    <h1>🍿 Underrated</h1>
+    <label for="numPlayers">Players:</label>
     <input type="number" id="numPlayers" min="2" value="2" />
     <div id="playerNames"></div>
     <button id="startBtn">Start</button>
+  </div>
+
+  <div id="lobby-rules" class="info-card">
+    <details>
+      <summary>Game Rules</summary>
+      <div class="rules-inline">
+        <p><strong>🎯 Goal:</strong> Win with the lowest-rated movie on IMDb you love!</p>
+        <p><strong>How it works:</strong> Each player picks their favorite movie they think has the lowest IMDb rating. For that movie, they guess the exact IMDb rating and release year. Lowest IMDb rating wins. If ratings tie, bonus points decide the winner.</p>
+      </div>
+    </details>
   </div>
 
   <div id="movie-entry" class="hidden">
@@ -50,7 +60,7 @@
     <button id="restartBtn">Restart</button>
   </div>
 
-  <footer class="site-meta">v1.3.0 | 2026-03-01T23:13:54Z</footer>
+  <footer class="site-meta">v1.3.1 | 2026-03-01</footer>
 
   <script type="module" src="./js/main.js"></script>
 </body>
