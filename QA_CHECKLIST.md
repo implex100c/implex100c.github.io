@@ -19,8 +19,9 @@
 - Confirm each click of `Confirm` advances exactly one player prompt.
 
 ## 4) Quiz
-- Confirm year/rating render as values or `N/A` without crashes.
-- Toggle checkboxes and click `Next`; confirm values persist for that current entry.
+- Enter invalid year/rating values and confirm validation errors appear.
+- Enter a valid 4-digit year and one-decimal rating, then click `Next`.
+- Confirm the current entry records correct year/rating matches based on the submitted answers.
 - Confirm final `Next` transitions once to Results.
 
 ## 5) Results

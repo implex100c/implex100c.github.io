@@ -5,7 +5,7 @@ Browser party game hosted on GitHub Pages.
 ## Local development
 
 ```bash
-cd /Users/implex/implex100c.github.io
+cd /Users/implex/underrated
 python3 -m http.server 8000
 ```
 
