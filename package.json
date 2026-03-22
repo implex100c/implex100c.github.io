@@ -2,9 +2,20 @@
   "name": "underrated",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
+    "dev": "wrangler pages dev",
     "build:data": "node scripts/build-imdb-slim.js",
     "build:data:json": "node scripts/build-imdb-slim.js --from-json movies.json",
-    "download:data": "mkdir -p data/raw && curl -L -o data/raw/title.basics.tsv.gz https://datasets.imdbws.com/title.basics.tsv.gz && curl -L -o data/raw/title.ratings.tsv.gz https://datasets.imdbws.com/title.ratings.tsv.gz"
+    "download:data": "mkdir -p data/raw && curl -L -o data/raw/title.basics.tsv.gz https://datasets.imdbws.com/title.basics.tsv.gz && curl -L -o data/raw/title.ratings.tsv.gz https://datasets.imdbws.com/title.ratings.tsv.gz",
+    "db:migrate:local": "wrangler d1 execute underrated --local --file ./migrations/0001_create_movies.sql",
+    "db:migrate:remote": "wrangler d1 execute underrated --remote --file ./migrations/0001_create_movies.sql",
+    "db:import:local": "node scripts/import-d1.js --local",
+    "db:import:remote": "node scripts/import-d1.js --remote",
+    "db:import:sql": "node scripts/import-d1.js --no-execute",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
   }
 }

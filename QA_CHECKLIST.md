@@ -1,10 +1,10 @@
 # Underrated - Manual QA Checklist
 
 ## 1) Startup / Load
-- Open `index.html` via local server.
-- Confirm `Search` is disabled before `movies.slim.json` finishes loading.
-- Confirm `Search` becomes enabled once data is loaded.
-- Simulate missing `movies.slim.json` and confirm error text appears and `Search` stays disabled.
+- Run the app through `wrangler pages dev`.
+- Confirm the app loads without downloading `movies.slim.json`.
+- Confirm entering Movie Entry allows search immediately.
+- Simulate an API failure and confirm an error message appears in search results.
 
 ## 2) Lobby
 - Set player count to `1`: confirm `Start Game` is disabled.
@@ -17,6 +17,7 @@
 - Enter valid query and confirm max 10 rows shown.
 - Confirm `Confirm` stays disabled until one radio choice is selected.
 - Confirm each click of `Confirm` advances exactly one player prompt.
+- Confirm search results come from `/api/search` with no CORS errors.
 
 ## 4) Quiz
 - Enter invalid year/rating values and confirm validation errors appear.

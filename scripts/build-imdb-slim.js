@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const zlib = require('zlib');
-const readline = require('readline');
+import fs from 'node:fs';
+import path from 'node:path';
+import zlib from 'node:zlib';
+import readline from 'node:readline';
+import process from 'node:process';
+import {
+  compareMovies,
+  normalizeMovieRecord
+} from '../shared/movie-search.js';
 
 function parseArgs(argv) {
   const args = {
@@ -36,14 +41,6 @@ function parseArgs(argv) {
   return args;
 }
 
-function normalizeForSearch(input) {
-  return String(input || '')
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]/g, '');
-}
-
 function parseNullableInt(value) {
   if (value === '\\N' || value === '' || value == null) {
     return null;
@@ -63,31 +60,7 @@ function parseNullableFloat(value) {
 }
 
 function toSlimRecord(record) {
-  if (!record || typeof record !== 'object') {
-    return null;
-  }
-
-  if (typeof record.tconst !== 'string' || !record.tconst) {
-    return null;
-  }
-
-  if (typeof record.primaryTitle !== 'string' || !record.primaryTitle.trim()) {
-    return null;
-  }
-
-  const title = record.primaryTitle.trim();
-  const startYear = Number.isFinite(record.startYear) ? Math.trunc(record.startYear) : null;
-  const averageRating = Number.isFinite(record.averageRating) ? record.averageRating : null;
-  const numVotes = Number.isFinite(record.numVotes) && record.numVotes >= 0 ? Math.trunc(record.numVotes) : 0;
-
-  return {
-    tconst: record.tconst,
-    primaryTitle: title,
-    startYear,
-    averageRating,
-    numVotes,
-    normalizedTitle: normalizeForSearch(title)
-  };
+  return normalizeMovieRecord(record);
 }
 
 async function readGzipLines(filePath, onLine) {
@@ -176,18 +149,7 @@ async function buildFromTsv(args) {
     }
   });
 
-  movies.sort((a, b) => {
-    if (b.numVotes !== a.numVotes) {
-      return b.numVotes - a.numVotes;
-    }
-
-    const titleCmp = a.primaryTitle.localeCompare(b.primaryTitle);
-    if (titleCmp !== 0) {
-      return titleCmp;
-    }
-
-    return a.tconst.localeCompare(b.tconst);
-  });
+  movies.sort(compareMovies);
 
   return movies;
 }
@@ -216,18 +178,7 @@ function buildFromJson(inputPath, minVotes) {
     movies.push(slim);
   }
 
-  movies.sort((a, b) => {
-    if (b.numVotes !== a.numVotes) {
-      return b.numVotes - a.numVotes;
-    }
-
-    const titleCmp = a.primaryTitle.localeCompare(b.primaryTitle);
-    if (titleCmp !== 0) {
-      return titleCmp;
-    }
-
-    return a.tconst.localeCompare(b.tconst);
-  });
+  movies.sort(compareMovies);
 
   return movies;
 }

@@ -9,7 +9,7 @@ import {
   resetGameState,
   setStage
 } from './state.js';
-import { loadMovies, searchMovies } from './data.js';
+import { searchMovies } from './data.js';
 import { createUI } from './ui.js';
 
 const state = createInitialState();
@@ -98,8 +98,8 @@ function handleStartGame() {
   showCurrentMoviePrompt();
 }
 
-function handleSearch() {
-  if (state.stage !== 'movieEntry' || state.dataStatus !== 'ready') {
+async function handleSearch() {
+  if (state.stage !== 'movieEntry' || state.dataStatus === 'loading') {
     return;
   }
 
@@ -108,15 +108,33 @@ function handleSearch() {
     return;
   }
 
-  state.matches = searchMovies(state.moviesData, query, 10);
+  state.dataStatus = 'loading';
+  state.dataError = '';
   ui.setConfirmEnabled(false);
+  ui.setSearchEnabled(false);
 
-  if (state.matches.length === 0) {
-    ui.renderNoMatches();
-    return;
+  try {
+    state.matches = await searchMovies(query, 10);
+    if (state.stage !== 'movieEntry') {
+      return;
+    }
+
+    if (state.matches.length === 0) {
+      ui.renderNoMatches();
+      return;
+    }
+
+    ui.renderSearchResults(state.matches);
+  } catch (error) {
+    state.matches = [];
+    state.dataError = error instanceof Error ? error.message : 'Failed to search movies.';
+    ui.renderSearchError(state.dataError);
+  } finally {
+    state.dataStatus = 'ready';
+    if (state.stage === 'movieEntry') {
+      ui.setSearchEnabled(true);
+    }
   }
-
-  ui.renderSearchResults(state.matches);
 }
 
 function handleConfirmSelection() {
@@ -145,7 +163,6 @@ function handleConfirmSelection() {
     tconst: selected.tconst,
     primaryTitle: selected.primaryTitle,
     startYear: selected.startYear,
-    runtimeMinutes: selected.runtimeMinutes,
     averageRating: selected.averageRating,
     numVotes: selected.numVotes,
     correctYear: false,
@@ -368,7 +385,9 @@ function handleRestart() {
 async function bootstrap() {
   ui.setStage('lobby');
   refreshLobbyInputs();
-  ui.setSearchEnabled(false);
+  state.dataStatus = 'ready';
+  state.dataError = '';
+  ui.setSearchEnabled(true);
   ui.setConfirmEnabled(false);
 
   ui.el.numPlayersInput.addEventListener('input', refreshLobbyInputs);
@@ -406,19 +425,6 @@ async function bootstrap() {
   ui.el.nextQuizBtn.addEventListener('click', handleQuizNext);
   ui.el.restartBtn.addEventListener('click', handleRestart);
 
-  state.dataStatus = 'loading';
-  try {
-    state.moviesData = await loadMovies('movies.slim.json');
-    state.dataStatus = 'ready';
-    if (state.stage === 'movieEntry') {
-      ui.setSearchEnabled(true);
-    }
-  } catch (error) {
-    state.dataStatus = 'error';
-    state.dataError = error instanceof Error ? error.message : String(error);
-    ui.renderSearchError('Failed to load movie data.');
-    ui.setSearchEnabled(false);
-  }
 }
 
 bootstrap();
