@@ -1,4 +1,4 @@
-# Guilty Pleasure Movie - Manual QA Checklist
+# Underrated - Manual QA Checklist
 
 ## 1) Startup / Load
 - Open `index.html` via local server.

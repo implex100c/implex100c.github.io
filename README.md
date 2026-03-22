@@ -1,4 +1,4 @@
-# Guilty Pleasure Movie
+# Underrated
 
 Browser party game hosted on GitHub Pages.
 

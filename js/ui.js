@@ -129,7 +129,7 @@ export function createUI(doc) {
 
   function setMoviePrompt(playerName, playerNumber) {
     el.movieEntryTitle.textContent = `Player ${playerNumber}: ${playerName}`;
-    el.moviePrompt.textContent = "What's your guilty pleasure movie?";
+    el.moviePrompt.textContent = "What's your underrated movie?";
   }
 
   function clearMovieEntryForm() {

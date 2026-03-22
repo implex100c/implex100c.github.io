@@ -424,4 +424,4 @@ async function bootstrap() {
 bootstrap();
 
 // Expose minimal debug handle for manual QA in browser devtools.
-window.__gp = { state, openMovieEntry };
+window.__underrated = { state, openMovieEntry };
