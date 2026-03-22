@@ -7,8 +7,7 @@
     {
       "binding": "DB",
       "database_name": "underrated",
-      // Replace this placeholder after creating the D1 database in Cloudflare.
-      "database_id": "00000000-0000-0000-0000-000000000000"
+      "database_id": "651b2b27-04c4-4cd5-b19a-4a76e5f1259a"
     }
   ]
 }
