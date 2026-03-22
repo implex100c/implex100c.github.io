@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "build": "node scripts/build-pages-static.js",
     "dev": "wrangler pages dev",
     "build:data": "node scripts/build-imdb-slim.js",
     "build:data:json": "node scripts/build-imdb-slim.js --from-json movies.json",

@@ -27,6 +27,8 @@ Open <http://localhost:8788/>.
 
 1. Create a Cloudflare account.
 2. Create a Pages project connected to this GitHub repo.
+   - Build command: `npm run build`
+   - Build output directory: `dist`
 3. Create a D1 database named `underrated`.
 4. Replace the placeholder `database_id` in `wrangler.jsonc`.
 5. Bind the D1 database to the Pages project as `DB`.

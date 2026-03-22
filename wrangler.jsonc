@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "underrated",
   "compatibility_date": "2026-03-22",
-  "pages_build_output_dir": ".",
+  "pages_build_output_dir": "dist",
   "d1_databases": [
     {
       "binding": "DB",
