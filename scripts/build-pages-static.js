@@ -22,5 +22,6 @@ resetDir(outDir);
 copyIntoDist('index.html');
 copyIntoDist('styles.css');
 copyIntoDist('js');
+copyIntoDist('shared');
 
 console.log(`Prepared Cloudflare Pages assets in ${outDir}`);
