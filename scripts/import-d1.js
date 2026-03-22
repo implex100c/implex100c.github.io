@@ -112,7 +112,6 @@ function buildImportSql(movies) {
 
   const statements = [
     'PRAGMA foreign_keys = ON;',
-    'BEGIN TRANSACTION;',
     'DELETE FROM movie_tokens;',
     'DELETE FROM movies;'
   ];
@@ -137,7 +136,6 @@ function buildImportSql(movies) {
     );
   }
 
-  statements.push('COMMIT;');
   return `${statements.join('\n\n')}\n`;
 }
 
