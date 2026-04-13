@@ -11,6 +11,7 @@ export function createInitialState() {
     dataStatus: 'idle',
     dataError: '',
     moviesData: [],
+    lobbyNameDrafts: [],
     players: [],
     playersById: new Map(),
     entriesByPlayerId: new Map(),

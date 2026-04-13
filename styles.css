@@ -41,9 +41,17 @@ select {
 
 #lobby,
 #movie-entry,
-#quiz,
-#results {
+#quiz {
   max-width: 600px;
+  margin: auto;
+  background: #0f0f0f;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.15rem 1rem 1rem;
+}
+
+#results {
+  max-width: 860px;
   margin: auto;
   background: #0f0f0f;
   border: 1px solid var(--border);
@@ -112,6 +120,16 @@ table {
   border-collapse: collapse;
   margin: 1rem 0;
   background: rgba(20, 20, 20, 0.9);
+}
+
+.results-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#results table {
+  min-width: 760px;
+  font-size: 0.94rem;
 }
 
 th,
@@ -377,7 +395,7 @@ select:focus {
     font-size: 0.68rem;
   }
 
-  #results table {
+  .results-table-wrap {
     display: none;
   }
 

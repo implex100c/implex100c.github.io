@@ -10,6 +10,8 @@ import {
   setStage
 } from './state.js';
 import { searchMovies } from './data.js';
+import { parseLobbySeed } from './lobby-seed.js';
+import { buildWinnerSummary, compareScores, getRatingGuessDelta } from '../shared/game-results.js';
 import { createUI } from './ui.js';
 
 const state = createInitialState();
@@ -41,14 +43,38 @@ function readNumPlayers() {
   return parsed;
 }
 
-function refreshLobbyInputs() {
-  const oldValues = ui.getPlayerNameValues();
+function syncLobbyNameDraftsFromInputs() {
+  const inputs = Array.from(ui.el.namesContainer.querySelectorAll('input[data-player-name]'));
+  inputs.forEach((input, index) => {
+    state.lobbyNameDrafts[index] = input.value;
+  });
+}
+
+function refreshLobbyInputs(previousValues = null) {
+  if (Array.isArray(previousValues)) {
+    state.lobbyNameDrafts = [...previousValues];
+  } else {
+    syncLobbyNameDraftsFromInputs();
+  }
+
   const count = readNumPlayers();
-  ui.renderPlayerNameInputs(count, oldValues);
+  ui.renderPlayerNameInputs(count, state.lobbyNameDrafts);
   ui.updateStartEnabled(count);
 }
 
+function seedLobbyFromUrl() {
+  const seed = parseLobbySeed(window.location.search);
+  if (!seed) {
+    refreshLobbyInputs();
+    return;
+  }
+
+  ui.el.numPlayersInput.value = String(seed.playerCount);
+  refreshLobbyInputs(seed.playerNames);
+}
+
 function buildPlayers() {
+  syncLobbyNameDraftsFromInputs();
   const count = readNumPlayers();
   const inputs = Array.from(ui.el.namesContainer.querySelectorAll('input[data-player-name]'));
 
@@ -165,6 +191,8 @@ function handleConfirmSelection() {
     startYear: selected.startYear,
     averageRating: selected.averageRating,
     numVotes: selected.numVotes,
+    guessedYear: null,
+    guessedRating: null,
     correctYear: false,
     correctRating: false
   });
@@ -217,6 +245,8 @@ function handleQuizNext() {
     return;
   }
 
+  entry.guessedYear = validation.yearGuess;
+  entry.guessedRating = validation.ratingGuess;
   entry.correctYear = isCorrectYear(validation.yearGuess, entry.startYear);
   entry.correctRating = isCorrectRating(validation.ratingGuess, entry.averageRating);
 
@@ -308,71 +338,28 @@ function renderResults() {
   const scores = state.players.map(player => {
     const entry = state.entriesByPlayerId.get(player.id);
     const points = entry ? (entry.correctYear ? 1 : 0) + (entry.correctRating ? 1 : 0) : 0;
+    const guessedRating = entry ? entry.guessedRating : null;
+    const actualRating = entry ? entry.averageRating : null;
 
     return {
       name: player.name,
       title: entry ? entry.primaryTitle : 'N/A',
       tconst: entry ? entry.tconst : null,
-      rating: entry ? entry.averageRating : null,
+      guessedRating,
+      rating: actualRating,
+      guessedYear: entry ? entry.guessedYear : null,
       startYear: entry ? entry.startYear : null,
       correctYear: entry ? Boolean(entry.correctYear) : false,
       correctRating: entry ? Boolean(entry.correctRating) : false,
-      points
+      points,
+      ratingGuessDelta: getRatingGuessDelta(guessedRating, actualRating)
     };
   });
 
-  scores.sort((a, b) => {
-    const ar = Number.isFinite(a.rating) ? a.rating : Number.POSITIVE_INFINITY;
-    const br = Number.isFinite(b.rating) ? b.rating : Number.POSITIVE_INFINITY;
-    if (ar !== br) {
-      return ar - br;
-    }
-
-    if (b.points !== a.points) {
-      return b.points - a.points;
-    }
-
-    return a.name.localeCompare(b.name);
-  });
+  scores.sort(compareScores);
 
   const winnerSummary = buildWinnerSummary(scores);
   ui.renderResults(scores, winnerSummary);
-}
-
-function buildWinnerSummary(scores) {
-  if (scores.length === 0) {
-    return {
-      winners: [],
-      textBeforeNames: 'The winner is unavailable.',
-      textAfterNames: ''
-    };
-  }
-
-  const top = scores[0];
-  const topRating = Number.isFinite(top.rating) ? top.rating : Number.POSITIVE_INFINITY;
-  const topPoints = top.points;
-
-  const winners = scores
-    .filter(score => {
-      const scoreRating = Number.isFinite(score.rating) ? score.rating : Number.POSITIVE_INFINITY;
-      return scoreRating === topRating && score.points === topPoints;
-    })
-    .map(score => score.name)
-    .sort((a, b) => a.localeCompare(b));
-
-  if (winners.length === 1) {
-    return {
-      winners,
-      textBeforeNames: 'The winner is ',
-      textAfterNames: ' with the lowest rating and highest score!'
-    };
-  }
-
-  return {
-    winners,
-    textBeforeNames: 'The winners are ',
-    textAfterNames: ' with the lowest rating and highest score!'
-  };
 }
 
 function handleRestart() {
@@ -384,13 +371,24 @@ function handleRestart() {
 
 async function bootstrap() {
   ui.setStage('lobby');
-  refreshLobbyInputs();
+  seedLobbyFromUrl();
   state.dataStatus = 'ready';
   state.dataError = '';
   ui.setSearchEnabled(true);
   ui.setConfirmEnabled(false);
 
   ui.el.numPlayersInput.addEventListener('input', refreshLobbyInputs);
+  ui.el.namesContainer.addEventListener('input', event => {
+    if (!(event.target instanceof HTMLInputElement)) {
+      return;
+    }
+
+    if (!('playerName' in event.target.dataset)) {
+      return;
+    }
+
+    syncLobbyNameDraftsFromInputs();
+  });
   ui.el.startBtn.addEventListener('click', handleStartGame);
 
   ui.el.searchBtn.addEventListener('click', handleSearch);

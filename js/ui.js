@@ -265,10 +265,14 @@ export function createUI(doc) {
     }
     el.resultsList.appendChild(summaryText);
 
+    const tableWrap = doc.createElement('div');
+    tableWrap.className = 'results-table-wrap';
+
     const table = doc.createElement('table');
     const thead = doc.createElement('thead');
     const headRow = doc.createElement('tr');
-    ['Player', 'Movie', 'Rating', 'Year', 'Bonus'].forEach(label => appendCell(headRow, 'th', label));
+    ['Player', 'Movie', 'Guessed', 'Actual Rating', 'Guessed', 'Actual Year', 'Bonus']
+      .forEach(label => appendCell(headRow, 'th', label));
     thead.appendChild(headRow);
 
     const tbody = doc.createElement('tbody');
@@ -279,7 +283,8 @@ export function createUI(doc) {
 
     table.appendChild(thead);
     table.appendChild(tbody);
-    el.resultsList.appendChild(table);
+    tableWrap.appendChild(table);
+    el.resultsList.appendChild(tableWrap);
 
     const cards = doc.createElement('div');
     cards.className = 'results-cards';
@@ -289,27 +294,15 @@ export function createUI(doc) {
     el.resultsList.appendChild(cards);
   }
 
-  function appendValueWithMark(row, valueText, isCorrect) {
-    const cell = doc.createElement('td');
-    const value = doc.createElement('span');
-    value.textContent = `${valueText} `;
-    cell.appendChild(value);
-
-    const mark = doc.createElement('span');
-    mark.textContent = isCorrect ? '✓' : '✗';
-    mark.className = isCorrect ? 'mark-correct' : 'mark-incorrect';
-    cell.appendChild(mark);
-
-    row.appendChild(cell);
-  }
-
   function createResultRowModel(score, isWinner) {
     return {
       playerLabel: isWinner ? `🏆 ${score.name}` : score.name,
       tconst: score.tconst,
       title: score.title,
-      ratingText: formatRating(score.rating),
-      yearText: formatYear(score.startYear),
+      guessedRatingText: formatRating(score.guessedRating),
+      actualRatingText: formatRating(score.rating),
+      guessedYearText: formatYear(score.guessedYear),
+      actualYearText: formatYear(score.startYear),
       correctRating: score.correctRating,
       correctYear: score.correctYear,
       bonusText: String(score.points)
@@ -323,13 +316,10 @@ export function createUI(doc) {
     movieCell.appendChild(createMovieLink(row.tconst, row.title));
     tr.appendChild(movieCell);
 
-    const ratingCell = doc.createElement('td');
-    ratingCell.appendChild(createMarkedValue(row.ratingText, row.correctRating));
-    tr.appendChild(ratingCell);
-
-    const yearCell = doc.createElement('td');
-    yearCell.appendChild(createMarkedValue(row.yearText, row.correctYear));
-    tr.appendChild(yearCell);
+    appendNodeCell(tr, createMarkedValue(row.guessedRatingText, row.correctRating));
+    appendNodeCell(tr, createPlainValue(row.actualRatingText));
+    appendNodeCell(tr, createMarkedValue(row.guessedYearText, row.correctYear));
+    appendNodeCell(tr, createPlainValue(row.actualYearText));
 
     appendCell(tr, 'td', row.bonusText);
     return tr;
@@ -344,16 +334,22 @@ export function createUI(doc) {
     const player = doc.createElement('span');
     player.textContent = row.playerLabel;
     header.appendChild(player);
-    const bonus = doc.createElement('span');
-    bonus.textContent = `Bonus: ${row.bonusText}`;
-    header.appendChild(bonus);
     card.appendChild(header);
 
     card.appendChild(createResultCardRow('Movie', createMovieLink(row.tconst, row.title)));
-    card.appendChild(createResultCardRow('Rating', createMarkedValue(row.ratingText, row.correctRating)));
-    card.appendChild(createResultCardRow('Year', createMarkedValue(row.yearText, row.correctYear)));
+    card.appendChild(createResultCardRow('Guessed Rating', createMarkedValue(row.guessedRatingText, row.correctRating)));
+    card.appendChild(createResultCardRow('Actual Rating', createPlainValue(row.actualRatingText)));
+    card.appendChild(createResultCardRow('Guessed Year', createMarkedValue(row.guessedYearText, row.correctYear)));
+    card.appendChild(createResultCardRow('Actual Year', createPlainValue(row.actualYearText)));
+    card.appendChild(createResultCardRow('Bonus', createPlainValue(row.bonusText)));
 
     return card;
+  }
+
+  function appendNodeCell(row, node) {
+    const cell = doc.createElement('td');
+    cell.appendChild(node);
+    row.appendChild(cell);
   }
 
   function createResultCardRow(keyText, valueNode) {
@@ -383,6 +379,12 @@ export function createUI(doc) {
     mark.className = isCorrect ? 'mark-correct' : 'mark-incorrect';
     wrap.appendChild(mark);
     return wrap;
+  }
+
+  function createPlainValue(valueText) {
+    const value = doc.createElement('span');
+    value.textContent = valueText;
+    return value;
   }
 
   function clearResults() {
